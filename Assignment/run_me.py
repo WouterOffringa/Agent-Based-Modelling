@@ -2,12 +2,15 @@
 Run-me.py is the main file of the simulation. Run this file to run the simulation.
 """
 
+# Favourable method to run in the terminal, when the Assignment folder is opened
+
 import os
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
 import time as timer
 import pygame as pg
+import random
 from single_agent_planner import calc_heuristics
 from visualization import map_initialization, map_running
 from Aircraft import Aircraft
@@ -146,6 +149,12 @@ aircraft_lst = []   #List which can contain aircraft agents
 if visualization:
     map_properties = map_initialization(nodes_dict, edges_dict) #visualization properties
 
+# create lists of different kind of nodes
+gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
+rwy_dep = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_d"]
+rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
+tug_gates = [7, 9, 16, 23, 107]
+
 # =============================================================================
 # 1. While loop and visualization
 # =============================================================================
@@ -180,15 +189,25 @@ while running:
         timer.sleep(visualization_speed) 
       
     #Spawn aircraft for this timestep (use for example a random process)
-    if t == 1:    
-        ac = Aircraft(1, 'A', 37,36,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
-        ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
-        aircraft_lst.append(ac)
-        aircraft_lst.append(ac1)
+    spawning_time = 2
+    if (t-1) % spawning_time == 0:
+        i = len(aircraft_lst) + 1
+        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
+        if ac_type == 'A':
+            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+            aircraft_lst.append(ac)
+        else:
+            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+            aircraft_lst.append(ac)
+
+        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
+        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
+        # aircraft_lst.append(ac)
+        # aircraft_lst.append(ac1)
         
     #Do planning 
     if planner == "Independent":     
-        if t == 1: #(Hint: Think about the condition that triggers (re)planning) 
+        if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t)
     elif planner == "Prioritized":
         run_prioritized_planner()
