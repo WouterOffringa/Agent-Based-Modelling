@@ -1,4 +1,4 @@
-from single_agent_planner import simple_single_agent_astar
+from single_agent_planner_v2 import simple_single_agent_astar
 import math
 
 class Aircraft(object):
@@ -119,7 +119,7 @@ class Aircraft(object):
             start_node = self.start #node from which planning should be done
             goal_node = self.goal #node to which planning should be done
             
-            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, t)
+            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t)
             if success:
                 self.path_to_goal = path[1:]
                 next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import time as timer
 import pygame as pg
 import random
-from single_agent_planner import calc_heuristics
+from single_agent_planner_v2 import calc_heuristics
 from visualization import map_initialization, map_running
 from Aircraft import Aircraft
 from independent import run_independent_planner
