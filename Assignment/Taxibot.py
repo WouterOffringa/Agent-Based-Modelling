@@ -141,9 +141,16 @@ class Taxibot(object):
         
         else:
             return sum([
-                        (self.path_to_goal[-1][1] - t)*weights['routelength'], # Remaining route length (Agents with a shorter time to go get a smaller penalty)
-                        self.delay*weights['delay'], # Agents that have already experienced delay get higher priority
-                        (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[0]]))*weights['movementoptions'], # Amount of connected nodes to the current node, weighs how easy it is to get out of the way TODO: May be from_to[1], try it if stuff breaks
-                        (self.status == "pickup") * weights["pickup"] # Taxibots that are picking up an aircraft have higher priority
+                        # Remaining route length (Agents with a shorter time to go get a smaller penalty)
+                        (self.path_to_goal[-1][1] - t)*weights['routelength'], 
+
+                        # Agents that have already experienced delay get higher priority
+                        self.delay*weights['delay'], 
+
+                        # Amount of connected nodes to the current node, weighs how easy it is to get out of the way TODO: May be from_to[1], try it if stuff breaks
+                        (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[0]]))*weights['movementoptions'], 
+
+                        # Taxibots that are picking up an aircraft have higher priority
+                        (self.status == "pickup") * weights["pickup"]
                         ])
         
