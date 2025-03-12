@@ -106,7 +106,7 @@ class Aircraft(object):
                 
                 self.from_to = [new_from_id, new_next_id] #update new from and to node
 
-    def plan_independent(self, nodes_dict, edges_dict, heuristics, t):
+    def plan_independent(self, nodes_dict, edges_dict, heuristics, t, constraints=[]):
         """
         Plans a path for taxiing aircraft assuming that it knows the entire layout.
         Other traffic is not taken into account.
@@ -119,7 +119,7 @@ class Aircraft(object):
             start_node = self.start #node from which planning should be done
             goal_node = self.goal #node to which planning should be done
             
-            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t)
+            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=constraints)
             if success:
                 self.path_to_goal = path[1:]
                 next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal

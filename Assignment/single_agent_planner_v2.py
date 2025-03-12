@@ -86,7 +86,7 @@ def is_constrained(curr_node, next_node, next_time, constraint_table):
     if len(constraint_table) <= next_time:
         return False
 
-    for constraint in constraint_table[next_time]:
+    for constraint in constraint_table[int(next_time)]:
         if constraint['positive']:  # positive constraint
             if constraint['node_id'][0] != next_node:
                 return True
