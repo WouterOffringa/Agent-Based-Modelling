@@ -131,8 +131,26 @@ class Aircraft(object):
             #Check the path
             if path[0][1] != t:
                 raise Exception("Something is wrong with the timing of the path planning")
+            
+    def request_taxibot(self, nodes_dict, taxibot_list, heuristics, t):
+        """
+        Requests a taxibot for the aircraft.
+        """
+        #Initialize the list of the traveltimes from each taxibot to the aircraft
+        traveltime_list = []
+        for taxibot in taxibot_list:
+            if taxibot.status == "available":
+                #Calculate the distance between the taxibot and the aircraft
+                taxibot_pos = taxibot.position
+                aircraft_pos = self.position
+                
+                path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t)
+                travel_time = path[-1][1] #The final timestep arrival time
+                traveltime_list.append(travel_time)
+            else:
+                traveltime_list.append(10000)
 
-    
+
 
 
                 

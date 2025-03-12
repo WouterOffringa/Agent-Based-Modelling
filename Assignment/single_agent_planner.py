@@ -46,45 +46,149 @@ def heuristicFinder(graph, start_node, goal_node):
         raise Exception('Heuristic cannot be calculated: No connection between', start_node, "and", goal_node)
     return path, path_length
 
+def move(loc, dir):
+    directions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+    return loc[0] + directions[dir][0], loc[1] + directions[dir][1]
 
-def simple_single_agent_astar(nodes_dict, from_node, goal_node, heuristics, time_start):
-    # def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
+
+def build_constraint_table(constraints, agent):
+    ##############################
+    # Task 2.2/2.3: Return a table that constains the list of constraints of
+    #               the given agent for each time step. The table can be used
+    #               for a more efficient constraint violation check in the 
+    #               is_constrained function.
+
+    # max_timestep = -1  # the maximum timestep in these constraints
+    # #  collect constraints that are related to this agent
+    # for constraint in constraints:
+    #     if constraint['agent'] == agent:
+    #         max_timestep = max(max_timestep, constraint['timestep'])
+
+    # constraint_table = [[] for _ in range(max_timestep + 1)]
+
+    # for constraint in constraints:
+    #     if constraint['agent'] == agent:
+    #         constraint_table[constraint['timestep']].append({'loc': constraint['loc']})
+
+    # return constraint_table
+
+    positive = []  # to collect positive constraints
+    negative = []  # to collect negative constraints
+    max_timestep = -1  # the maximum timestep in these constraints
+    #  collect constraints that are related to this agent
+    for constraint in constraints:
+        if constraint['positive']:  # positive constraint is effective for everyone
+            if constraint['agent'] == agent:
+                positive.append(constraint)
+            else:
+                negative.append(constraint)
+            max_timestep = max(max_timestep, constraint['timestep'])
+        elif constraint['agent'] == agent:  # negative constraint is effective for only one agent
+            negative.append(constraint)
+            max_timestep = max(max_timestep, constraint['timestep'])
+
+    constraint_table = [[] for _ in range(max_timestep + 1)]
+    for constraint in positive:
+        if len(constraint['loc']) == 1:  # positive vertex constraint
+            constraint_table[constraint['timestep']].append({'loc': constraint['loc'], 'positive': True})
+        else:  # positive edge constraint
+            constraint_table[constraint['timestep'] - 1].append({'loc': [constraint['loc'][0]], 'positive': True})
+            constraint_table[constraint['timestep']].append({'loc': [constraint['loc'][1]], 'positive': True})
+
+    for constraint in negative:
+        if len(constraint['loc']) == 1:  # vertex constraint
+            constraint_table[constraint['timestep']].append({'loc': constraint['loc'], 'positive': False})
+        elif constraint['positive']:  # positive edge constraint for other agents
+            constraint_table[constraint['timestep'] - 1].append({'loc': [constraint['loc'][0]], 'positive': False})
+            constraint_table[constraint['timestep']].append({'loc': [constraint['loc'][1]], 'positive': False})
+            constraint_table[constraint['timestep']].append(
+                {'loc': [constraint['loc'][1], constraint['loc'][0]], 'positive': False})
+        else:  # negative edge constraint
+            constraint_table[constraint['timestep']].append({'loc': constraint['loc'], 'positive': False})
+
+    return constraint_table
+
+def is_constrained(curr_loc, next_loc, next_time, constraint_table):
+    ##############################
+    # Task 2.2/2.3: Check if a move from curr_loc to next_loc at time step next_time violates
+    #               any given constraint. For efficiency the constraints are indexed in a constraint_table
+    #               by time step, see build_constraint_table.
+
+    # if len(constraint_table) <= next_time:
+    #     return False
+
+    # for constraint in constraint_table[next_time]:
+    #     if len(constraint['loc']) == 1:  # vertex constraint
+    #         if constraint['loc'][0] == next_loc:
+    #             return True
+    #     else:  # edge constraint
+    #         if constraint['loc'] == [curr_loc, next_loc]:
+    #             return True
+
+    # return False
+
+    if len(constraint_table) <= next_time:
+        return False
+
+    for constraint in constraint_table[next_time]:
+        if constraint['positive']:  # positive constraint
+            if constraint['loc'][0] != next_loc:
+                return True
+        else:  # negative constraint
+            if len(constraint['loc']) == 1:  # vertex constraint
+                if constraint['loc'][0] == next_loc:
+                    return True
+            else:  # edge constraint
+                if constraint['loc'] == [curr_loc, next_loc]:
+                    return True
+
+    return False
+
+def simple_single_agent_astar(my_map, start_loc, goal_loc, h_values, agent, constraints=[], t_max=100):
+    """ my_map      - binary obstacle map
+        start_loc   - start position
+        goal_loc    - goal position
+        agent       - the agent that is being re-planned
+        constraints - constraints defining where robot should or cannot go at each timestep
     """
-    Single agent A* search. Time start can only be the time that an agent is at a node.
-    INPUT:
-        - nodes_dict = [dict] dictionary with nodes and node properties
-        - from_node = [int] node_id of node from which planning is done
-        - goal_node = [int] node_id of node to which planning is done
-        - heuristics = [dict] dict with shortest path distance between nodes. Dictionary in a dictionary. Key of first dict is fromnode and key in second dict is tonode.
-        - time_start = [float] planning start time. 
-        - Hint: do you need more inputs?
-    RETURNS:
-        - success = True/False. True if path is found and False is no path is found
-        - path = list of tuples with (loc, timestep) pairs -> example [(37, 1), (101, 2)]. Empty list if success == False.
-    """
-    
-    from_node_id = from_node
-    goal_node_id = goal_node
-    time_start = time_start
-    
+
+    constraint_table = build_constraint_table(constraints, agent)
     open_list = []
     closed_list = dict()
-    earliest_goal_timestep = time_start
-    h_value = heuristics[from_node_id][goal_node_id]
-    root = {'loc': from_node_id, 'g_val': 0, 'h_val': h_value, 'parent': None, 'timestep': time_start}
+    earliest_goal_timestep = 0
+    h_value = h_values[start_loc]
+    root = {'loc': start_loc, 'g_val': 0, 'h_val': h_value, 'parent': None, 'timestep': 0}
     push_node(open_list, root)
     closed_list[(root['loc'], root['timestep'])] = root
-    while len(open_list) > 0:
+    t_max_achieved = False
+    while len(open_list) > 0 and t_max_achieved==False:
         curr = pop_node(open_list)
-        if curr['loc'] == goal_node_id and curr['timestep'] >= earliest_goal_timestep:
-            return True, get_path(curr)
-        
-        for neighbor in nodes_dict[curr['loc']]["neighbors"]:
-            child = {'loc': neighbor,
-                    'g_val': curr['g_val'] + 0.5,
-                    'h_val': heuristics[neighbor][goal_node_id],
+        if curr['loc'] == goal_loc and curr['timestep'] >= earliest_goal_timestep:
+            found = True
+            if curr['timestep'] + 1 < len(constraint_table):
+                for t in range(curr['timestep'] + 1, len(constraint_table)):
+                    if is_constrained(goal_loc, goal_loc, t, constraint_table):
+                        found = False
+                        earliest_goal_timestep = t + 1
+                        break
+            if found:
+                return get_path(curr)
+        for dir in range(5):
+            child_loc = move(curr['loc'], dir)
+            if child_loc[0] < 0 or child_loc[0] >= len(my_map) \
+               or child_loc[1] < 0 or child_loc[1] >= len(my_map[0]):
+               continue
+            if my_map[child_loc[0]][child_loc[1]] or is_constrained(curr['loc'], child_loc, curr['timestep'] + 1,
+                                                                  constraint_table):
+                continue
+            child = {'loc': child_loc,
+                    'g_val': curr['g_val'] + 1,
+                    'h_val': h_values[child_loc],
                     'parent': curr,
-                    'timestep': curr['timestep'] + 0.5}
+                    'timestep': curr['timestep'] + 1}
+            if child['timestep'] > t_max:
+                t_max_achieved = True
+                break
             if (child['loc'], child['timestep']) in closed_list:
                 existing_node = closed_list[(child['loc'], child['timestep'])]
                 if compare_nodes(child, existing_node):
@@ -93,8 +197,8 @@ def simple_single_agent_astar(nodes_dict, from_node, goal_node, heuristics, time
             else:
                 closed_list[(child['loc'], child['timestep'])] = child
                 push_node(open_list, child)
-    print("No path found, "+str(len(closed_list))+" nodes visited")
-    return False, [] # Failed to find solutions
+
+    return None  # Failed to find solutionsnodes_dict, from_node, goal_node, heuristics, time_start):
 
 def push_node(open_list, node):
     heapq.heappush(open_list, (node['g_val'] + node['h_val'], node['h_val'], node['loc'], node))
