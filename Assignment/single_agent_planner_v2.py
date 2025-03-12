@@ -135,10 +135,10 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
             if is_constrained(curr['node_id'], child_node, curr['timestep'] + 1, constraint_table):
                 continue
             child = {'node_id': child_node,
-                    'g_val': curr['g_val'] + 1,
+                    'g_val': curr['g_val'] + 0.5,
                     'h_val': h_values[start_node][child_node],
                     'parent': curr,
-                    'timestep': curr['timestep'] + 1}
+                    'timestep': curr['timestep'] + 0.5}
             if child['timestep'] > t_max:
                 t_max_achieved = True
                 break
