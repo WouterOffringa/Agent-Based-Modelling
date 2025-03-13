@@ -183,7 +183,8 @@ while running:
         current_states = {} #Collect current states of all aircraft
         for ac in aircraft_lst:
             if ac.status == "taxiing":
-                current_states[ac.id] = {"ac_id": ac.id,
+                current_states[ac.id] = {"type": "aircraft",
+                                         "ac_id": ac.id,
                                          "xy_pos": ac.position,
                                          "heading": ac.heading}
         escape_pressed = map_running(map_properties, current_states, t)
@@ -214,6 +215,8 @@ while running:
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
         #implement the check to see if two aircraft will collide with eachother
+
+        # TODO This is too global, needs to work with a scanning function and this needs to move to agent functionality
         if t % 0.5 == 0:
             horizon_length = [t+0.5, t+1., t+1.5] #These timesteps will be checked for possible collision
             path_matrix = []
