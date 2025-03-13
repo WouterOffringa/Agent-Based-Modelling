@@ -135,6 +135,54 @@ class Aircraft(object):
             if path[0][1] != t:
                 raise Exception("Something is wrong with the timing of the path planning")
             
+    def broadcast_next_nodes(self, horizon_length):
+        """
+        Find and broadcasts the next nodes when requested to the central location.
+        """
+        ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon_length]
+        if len(ac_nextsteps) == 1:
+            ac_nextsteps.append(None)
+            ac_nextsteps.append(None)
+        elif len(ac_nextsteps) == 2:
+            ac_nextsteps.append(None)
+
+        return ac_nextsteps
+
+    def conflict_detection(self, aircraft_lst, horizon_length):
+        """
+        Detects if there is a conflict between two aircraft.
+        """
+        #Define own next 3 steps and request the next 3 steps of all other aircrafts that are taxxiing
+        other_paths = []
+        Aircrafts_checked = []
+        ac_nextsteps = self.broadcast_next_nodes(horizon_length)
+        for ac in aircraft_lst:
+            if ac.status == "taxiing":
+                if ac.id != self.id:
+                    ac_nextsteps = ac.broadcast_next_nodes(horizon_length)
+                    other_paths.append(ac_nextsteps)
+                    Aircrafts_checked.append(ac.id)
+
+        #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
+        for i in range(len(Aircrafts_checked)):
+            if ac_nextsteps[0] == other_paths[i][0] or ac_nextsteps[1] == other_paths[i][1] or ac_nextsteps[2] == other_paths[i][2]:
+                Conflicted_aircraft = Aircrafts_checked[i]
+                print("Conflict detected between", self.id, "and", Aircrafts_checked[i],". Now starting conflict resolution.")
+                #self.Conflict_resolution(Conflicted_aircraft)
+                return 
+            else:
+                return 
+    
+    def Conflict_resolution(self, conflicted_aircraft):
+        """
+        Resolves the conflict between two aircrafts.
+        """
+        #find own priority level and that of the conflicted aircraft
+        self_priority = self.determine_prioritylevel()
+        conflicted_priority = conflicted_aircraft.determine_prioritylevel()
+        return
+
+            
     def request_taxibot(self, nodes_dict, taxibot_list, heuristics, t):
         """
         Requests a taxibot for the aircraft.
@@ -153,6 +201,24 @@ class Aircraft(object):
             else:
                 traveltime_list.append(10000)
 
+    def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
+                                            'delay': 3,
+                                            'movementoptions': 5,
+                                            'pickup': 7
+                                            }):
+
+        # Taxibots that aren't doing anything have absolute lowest priority
+        if self.status == "unassigned":
+            return -1000
+        
+        else:
+            return sum([
+                        (self.path_to_goal[-1][1] - t)*weights['routelength'], # Remaining route length (Agents with a shorter time to go get a smaller penalty)
+                        self.delay*weights['delay'], # Agents that have already experienced delay get higher priority
+                        (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[0]]))*weights['movementoptions'], # Amount of connected nodes to the current node, weighs how easy it is to get out of the way TODO: May be from_to[1], try it if stuff breaks
+                        (self.status == "pickup") * weights["pickup"] # Taxibots that are picking up an aircraft have higher priority
+                        ])
+        
 
 
 
