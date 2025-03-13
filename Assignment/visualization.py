@@ -276,7 +276,7 @@ def map_running(map_properties, current_states, t):  # function to update the ma
                 heading = int(current_states[agent]["heading"])
                 x_pos = current_states[agent]["xy_pos"][0]
                 y_pos = current_states[agent]["xy_pos"][1]
-                plot_aircraft(scr, reso, heading, x_pos, y_pos, min_x, max_y, x_range, y_range)
+                plot_tug(scr, reso, heading, x_pos, y_pos, min_x, max_y, x_range, y_range)
 
     if disp_time:
       plot_text(scr, "timestep", black, 30, reso, min_x + 0.90 * x_range, max_y - 0.03 * y_range, min_x, max_y,
