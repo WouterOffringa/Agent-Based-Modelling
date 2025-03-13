@@ -120,11 +120,14 @@ class Aircraft(object):
             goal_node = self.goal #node to which planning should be done
             
             success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=constraints)
+
+            #Make sure the path is broadcasted to some central location
+
             if success:
                 self.path_to_goal = path[1:]
                 next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
                 self.from_to = [path[0][0], next_node_id]
-                print("Path AC", self.id, ":", path)
+                #print("Path AC", self.id, ":", path)
             else:
                 raise Exception("No solution found for", self.id)
             

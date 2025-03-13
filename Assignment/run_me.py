@@ -168,6 +168,7 @@ t= 0
 
 print("Simulation Started")
 while running:
+
     t= round(t,2)    
        
     #Check conditions for termination
@@ -211,6 +212,38 @@ while running:
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+
+        #implement the check to see if two aircraft will collide with eachother
+        if t % 0.5 == 0:
+            horizon_length = [t+0.5, t+1., t+1.5] #These timesteps will be checked for possible collision
+            path_matrix = []
+            Aircrafts_checked = []
+            for ac in aircraft_lst:
+                if ac.status == "taxiing": #Only check for taxxiing ac
+                    Aircrafts_checked.append(ac.id)
+                    ac_nextsteps = [step[0] for step in ac.path_to_goal if step[1] in horizon_length]
+                    if len(ac_nextsteps) == 1:
+                        ac_nextsteps.append(None)
+                        ac_nextsteps.append(None)
+                    elif len(ac_nextsteps) == 2:
+                        ac_nextsteps.append(None)
+                    path_matrix.append(ac_nextsteps)
+            print("path matrix at timestep", t , "is", path_matrix)
+
+            #check if there is an entry that is the same in the same column and return the id of the aircrafts
+            print("Aircrafts checked", Aircrafts_checked)
+            for i in range(len(Aircrafts_checked)):
+                for j in range(len(Aircrafts_checked)):
+                    if i != j:
+                        if path_matrix[i][0] == path_matrix[j][0] and path_matrix[i][0] != None:
+                            print("Aircraft", Aircrafts_checked[i], "and Aircraft", Aircrafts_checked[j], "will collide at timestep", t+0.5)
+                        if path_matrix[i][1] == path_matrix[j][1] and path_matrix[i][1] != None:
+                            print("Aircraft", Aircrafts_checked[i], "and Aircraft", Aircrafts_checked[j], "will collide at timestep", t+1)
+                        if path_matrix[i][2] == path_matrix[j][2] and path_matrix[i][2] != None:
+                            print("Aircraft", Aircrafts_checked[i], "and Aircraft", Aircrafts_checked[j], "will collide at timestep", t+1.5)
+            
+
+        
     elif planner == "Prioritized":
         run_prioritized_planner()
     elif planner == "CBS":
