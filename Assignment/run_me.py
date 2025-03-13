@@ -17,6 +17,7 @@ from Aircraft import Aircraft
 from independent import run_independent_planner
 from prioritized import run_prioritized_planner
 from cbs import run_CBS
+from PrioritySolver import PriorityDetector
 
 #%% SET SIMULATION PARAMETERS
 #Input file names (used in import_layout) -> Do not change those unless you want to specify a new layout.
@@ -183,8 +184,7 @@ while running:
         current_states = {} #Collect current states of all aircraft
         for ac in aircraft_lst:
             if ac.status == "taxiing":
-                current_states[ac.id] = {"type": "aircraft",
-                                         "ac_id": ac.id,
+                current_states[ac.id] = {"ac_id": ac.id,
                                          "xy_pos": ac.position,
                                          "heading": ac.heading}
         escape_pressed = map_running(map_properties, current_states, t)
@@ -215,35 +215,8 @@ while running:
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
         #implement the check to see if two aircraft will collide with eachother
-
-        # TODO This is too global, needs to work with a scanning function and this needs to move to agent functionality
         if t % 0.5 == 0:
-            horizon_length = [t+0.5, t+1., t+1.5] #These timesteps will be checked for possible collision
-            path_matrix = []
-            Aircrafts_checked = []
-            for ac in aircraft_lst:
-                if ac.status == "taxiing": #Only check for taxxiing ac
-                    Aircrafts_checked.append(ac.id)
-                    ac_nextsteps = [step[0] for step in ac.path_to_goal if step[1] in horizon_length]
-                    if len(ac_nextsteps) == 1:
-                        ac_nextsteps.append(None)
-                        ac_nextsteps.append(None)
-                    elif len(ac_nextsteps) == 2:
-                        ac_nextsteps.append(None)
-                    path_matrix.append(ac_nextsteps)
-            print("path matrix at timestep", t , "is", path_matrix)
-
-            #check if there is an entry that is the same in the same column and return the id of the aircrafts
-            print("Aircrafts checked", Aircrafts_checked)
-            for i in range(len(Aircrafts_checked)):
-                for j in range(len(Aircrafts_checked)):
-                    if i != j:
-                        if path_matrix[i][0] == path_matrix[j][0] and path_matrix[i][0] != None:
-                            print("Aircraft", Aircrafts_checked[i], "and Aircraft", Aircrafts_checked[j], "will collide at timestep", t+0.5)
-                        if path_matrix[i][1] == path_matrix[j][1] and path_matrix[i][1] != None:
-                            print("Aircraft", Aircrafts_checked[i], "and Aircraft", Aircrafts_checked[j], "will collide at timestep", t+1)
-                        if path_matrix[i][2] == path_matrix[j][2] and path_matrix[i][2] != None:
-                            print("Aircraft", Aircrafts_checked[i], "and Aircraft", Aircrafts_checked[j], "will collide at timestep", t+1.5)
+            PriorityDetector(aircraft_lst, t)
             
 
         

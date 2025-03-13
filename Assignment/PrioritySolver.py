@@ -6,12 +6,12 @@ It will call the priority function of the agents, compare them return a replanni
 
 """
 
-import Aircraft.py
-import Taxibot.py
+import Aircraft
+
 
 def PriorityDetector(aircraft_lst, t):
     horizon_length = [t+0.5, t+1., t+1.5] #These timesteps will be checked for possible collision
     for ac in aircraft_lst:
         if ac.status == "taxiing":
-            ac.ConflictDetection(horizon_length)
+            ac.conflict_detection(aircraft_lst, horizon_length)
 
