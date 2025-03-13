@@ -22,6 +22,7 @@ disp_vehicles = True
 
 #Lines below are used in visualization, dont change them (line 26-46)
 piclist = []  # list to store all pics
+piclist_tug = [] # list to store all tug pics
 rectlist = []  # list to store the rectangular areas of the surface
 squared_display = True  # create squared display
 boundary_margin = 0.01  # add boundary margin to be sure that points are within boundary
@@ -56,6 +57,13 @@ def plot_aircraft(scr, reso, deg, x, y, x0, y0, x_range, y_range, x_shift=0, y_s
     rectlist[deg].centerx = plane_map_x  # set x-location of the aircraft image
     rectlist[deg].centery = plane_map_y  # set y-location of the aircraft image
     scr.blit(piclist[deg], rectlist[deg])  # blit the aircraft image to the screen
+
+def plot_tug(scr, reso, deg, x, y, x0, y0, x_range, y_range, x_shift=0, y_shift=0):
+    plane_map_x = c2m_x(x, x0, reso[0], x_range, x_shift)  # convert x-coordinates to map coordinates
+    plane_map_y = c2m_y(y, y0, reso[1], y_range, y_shift)  # convert y-coordinates to map coordinates
+    rectlist[deg].centerx = plane_map_x  # set x-location of the tug image
+    rectlist[deg].centery = plane_map_y  # set y-location of the tug image
+    scr.blit(piclist_tug[deg], rectlist[deg])  # blit the aircraft image to the screen
 
 def plot_line(scr, color_code, reso, radius, coord_1, coord_2, x0, y0, x_range, y_range, x_shift=0, y_shift=0):
     wp_map_x_1 = c2m_x(coord_1[0], x0, reso[0], x_range, x_shift)  # get x-pixel of source
@@ -106,6 +114,9 @@ def map_initialization(nodes_dict, edges_dict):  # function to initialise mapf
     scr.fill(white)  # set background color
     plane_pic = pg.image.load(os.getcwd() + "\\blue-plane-hi.bmp")  # get the aircraft image
     plane_pic.set_colorkey(pg.Color(255, 255, 255))  # remove white background to make transparent
+    tug_pic = pg.image.load(os.getcwd() + "\\tug.bmp")  # get the tug image
+    tug_pic.set_colorkey(pg.Color(255, 255, 255))  # remove white background to make transparent
+
 
     for i in range(0, 360):  # transform aircraft image in every possible direction
         piclist.append(pg.transform.rotozoom(plane_pic, i, (1. / 14.)))  # 1/14 is used for scaling the aircraft image
@@ -255,12 +266,18 @@ def map_running(map_properties, current_states, t):  # function to update the ma
     
     #draw aircraft and aircraft id
     if disp_vehicles:
-        for aircraft in current_states.keys():
-            heading = int(current_states[aircraft]["heading"])
-            x_pos = current_states[aircraft]["xy_pos"][0]
-            y_pos = current_states[aircraft]["xy_pos"][1]
-            plot_aircraft(scr, reso, heading, x_pos, y_pos, min_x, max_y, x_range, y_range)
-            
+        for agent in current_states.keys(): 
+            if current_states[agent]["type"] == "aircraft":
+                heading = int(current_states[agent]["heading"])
+                x_pos = current_states[agent]["xy_pos"][0]
+                y_pos = current_states[agent]["xy_pos"][1]
+                plot_aircraft(scr, reso, heading, x_pos, y_pos, min_x, max_y, x_range, y_range)
+            else:
+                heading = int(current_states[agent]["heading"])
+                x_pos = current_states[agent]["xy_pos"][0]
+                y_pos = current_states[agent]["xy_pos"][1]
+                plot_aircraft(scr, reso, heading, x_pos, y_pos, min_x, max_y, x_range, y_range)
+
     if disp_time:
       plot_text(scr, "timestep", black, 30, reso, min_x + 0.90 * x_range, max_y - 0.03 * y_range, min_x, max_y,
                 x_range, y_range)
