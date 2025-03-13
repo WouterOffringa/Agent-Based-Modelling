@@ -159,10 +159,10 @@ class Aircraft(object):
         for ac in aircraft_lst:
             if ac.status == "taxiing":
                 if ac.id != self.id:
-                    print("Checking aircraft", ac.id)
-                    print("own id is",self.id)
-                    other_paths.append(ac_nextsteps)
+                    other_nextsteps = ac.broadcast_next_nodes(horizon_length)
+                    other_paths.append(other_nextsteps)
                     Aircrafts_checked.append(ac.id)
+
         print("Aircraft", self.id, "next steps:", ac_nextsteps)
         print("Other aircrafts next steps:", other_paths)
         #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading

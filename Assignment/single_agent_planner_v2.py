@@ -173,5 +173,5 @@ def get_path(goal_node):
         path.append((curr['node_id'], curr['timestep']))
         curr = curr['parent']
     path.reverse()
-    print(path)
+    #print(path)
     return path
