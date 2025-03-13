@@ -14,6 +14,7 @@ import random
 from single_agent_planner_v2 import calc_heuristics
 from visualization import map_initialization, map_running
 from Aircraft import Aircraft
+from Taxibot import Taxibot
 from independent import run_independent_planner
 from prioritized import run_prioritized_planner
 from cbs import run_CBS
@@ -146,6 +147,8 @@ graph = create_graph(nodes_dict, edges_dict, plot_graph)
 heuristics = calc_heuristics(graph, nodes_dict)
 
 aircraft_lst = []   #List which can contain aircraft agents
+tug_lst = []
+# tug_lst = [Taxibot(i, [7, 9, 16, 23, 107][i], [7, 9, 16, 23, 107][i]) for i in range(5)] # List of tugs
 
 if visualization:
     map_properties = map_initialization(nodes_dict, edges_dict) #visualization properties
@@ -187,28 +190,34 @@ while running:
                 current_states[ac.id] = {"ac_id": ac.id,
                                          "xy_pos": ac.position,
                                          "heading": ac.heading}
+        for tug in tug_lst:
+            if tug.status == "taxiing":
+                current_states[tug.id] = {"type": "tug",
+                                         "ac_id": tug.id,
+                                         "xy_pos": tug.position,
+                                         "heading": tug.heading}
         escape_pressed = map_running(map_properties, current_states, t)
         timer.sleep(visualization_speed) 
       
     #Spawn aircraft for this timestep (use for example a random process)
-    spawning_time = 10
+    spawning_time = 2
     if (t-1) % spawning_time == 0:
-        # i = len(aircraft_lst) + 1
-        # ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
-        # if ac_type == 'A':
-        #     ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
-        #     aircraft_lst.append(ac)
-        # else:
-        #     ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
-        #     aircraft_lst.append(ac)
+        i = len(aircraft_lst) + 1
+        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
+        if ac_type == 'A':
+            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+            aircraft_lst.append(ac)
+        else:
+            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+            aircraft_lst.append(ac)
 
-        ac = Aircraft(1, 'A', 37,36,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
-        ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
-        aircraft_lst.append(ac)
-        aircraft_lst.append(ac1)
-        constraints = [{'agent': 1, 'node_id': [n], 'timestep': tc, 'positive': False}
-                       for n in range(18,23) for tc in range(3,10)]
-        # constraints = []
+        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
+        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
+        # aircraft_lst.append(ac)
+        # aircraft_lst.append(ac1)
+        # constraints = [{'agent': 1, 'node_id': [n], 'timestep': tc, 'positive': False}
+        #                for n in range(18,23) for tc in range(3,10)]
+        constraints = []
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
