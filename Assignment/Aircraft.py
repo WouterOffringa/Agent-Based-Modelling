@@ -165,9 +165,12 @@ class Aircraft(object):
                     
         #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
         for i in range(len(Aircrafts_checked)):
-            if ac_nextsteps[0] == other_paths[i][0] or ac_nextsteps[1] == other_paths[i][1] or ac_nextsteps[2] == other_paths[i][2]:
+            if (ac_nextsteps[0] is not None and ac_nextsteps[0] == other_paths[i][0]) or \
+               (ac_nextsteps[1] is not None and ac_nextsteps[1] == other_paths[i][1]) or \
+               (ac_nextsteps[2] is not None and ac_nextsteps[2] == other_paths[i][2]):             
                 Conflicted_aircraft = Aircrafts_checked[i]
-                print("Conflict detected between", self.id, "and", Aircrafts_checked[i],". Now starting conflict resolution.")
+                print("own path",ac_nextsteps,"other path", other_paths[i])
+                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i],". Now starting conflict resolution.")
                 #self.Conflict_resolution(Conflicted_aircraft)
         
         return
