@@ -162,18 +162,15 @@ class Aircraft(object):
                     other_nextsteps = ac.broadcast_next_nodes(horizon_length)
                     other_paths.append(other_nextsteps)
                     Aircrafts_checked.append(ac.id)
-
-        print("Aircraft", self.id, "next steps:", ac_nextsteps)
-        print("Other aircrafts next steps:", other_paths)
+                    
         #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
         for i in range(len(Aircrafts_checked)):
             if ac_nextsteps[0] == other_paths[i][0] or ac_nextsteps[1] == other_paths[i][1] or ac_nextsteps[2] == other_paths[i][2]:
                 Conflicted_aircraft = Aircrafts_checked[i]
                 print("Conflict detected between", self.id, "and", Aircrafts_checked[i],". Now starting conflict resolution.")
                 #self.Conflict_resolution(Conflicted_aircraft)
-                return 
-            else:
-                return 
+        
+        return
     
     def Conflict_resolution(self, conflicted_aircraft):
         """
