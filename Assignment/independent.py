@@ -7,5 +7,5 @@ def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t,
         if ac.spawntime == t:
             ac.status = "taxiing" 
             ac.position = nodes_dict[ac.start]["xy_pos"]
-            ac.plan_independent(nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+            ac.plan_independent(nodes_dict, edges_dict, heuristics, t)
             

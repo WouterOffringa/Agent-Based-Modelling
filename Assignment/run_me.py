@@ -220,8 +220,8 @@ while running:
         # aircraft_lst.append(ac1)
         # aircraft_lst.append(ac2)
         # aircraft_lst.append(ac3)
-        constraints = [{'agent': 1, 'node_id': [n], 'timestep': tc, 'positive': False}
-                       for n in range(18,23) for tc in range(3,10)]
+        #constraints = [{'agent': 1, 'node_id': [n], 'timestep': tc, 'positive': False}
+                       #for n in range(18,23) for tc in range(3,10)]
         constraints = []
     #Do planning 
     if planner == "Independent":     
@@ -230,9 +230,9 @@ while running:
 
         #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:
-            PriorityDetector(aircraft_lst, t)
+            PriorityDetector(aircraft_lst, t, edges_dict, nodes_dict, heuristics)
             
-
+            
         
     elif planner == "Prioritized":
         run_prioritized_planner()

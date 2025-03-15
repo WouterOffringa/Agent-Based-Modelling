@@ -29,10 +29,17 @@ class Aircraft(object):
         self.status = None 
         self.path_to_goal = [] #planned path left from current location
         self.from_to = [0,0]
+        self.constraints = []
 
         #State related
         self.heading = 0
         self.position = (0,0) #xy position on map
+        self.delay = 0
+
+        #Replanning related
+        self.last_node = None
+        self.replan = False
+    
 
     def get_heading(self, xy_start, xy_next):
         """
@@ -106,7 +113,7 @@ class Aircraft(object):
                 
                 self.from_to = [new_from_id, new_next_id] #update new from and to node
 
-    def plan_independent(self, nodes_dict, edges_dict, heuristics, t, constraints=[]):
+    def plan_independent(self, nodes_dict, edges_dict, heuristics, t):
         """
         Plans a path for taxiing aircraft assuming that it knows the entire layout.
         Other traffic is not taken into account.
@@ -119,8 +126,11 @@ class Aircraft(object):
             start_node = self.start #node from which planning should be done
             goal_node = self.goal #node to which planning should be done
             
-            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=constraints)
-
+            if self.replan == False:
+                success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+            if self.replan == True:
+                success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+                self.replan = False
             #Make sure the path is broadcasted to some central location
 
             if success:
@@ -148,7 +158,7 @@ class Aircraft(object):
 
         return ac_nextsteps
 
-    def conflict_detection(self, aircraft_lst, horizon_length):
+    def conflict_detection(self, aircraft_lst, horizon_length, t, edges_dict,nodes_dict, heuristics):
         """
         Detects if there is a conflict between two aircraft.
         """
@@ -161,28 +171,54 @@ class Aircraft(object):
                 if ac.id != self.id:
                     other_nextsteps = ac.broadcast_next_nodes(horizon_length)
                     other_paths.append(other_nextsteps)
-                    Aircrafts_checked.append(ac.id)
+                    Aircrafts_checked.append(ac)
                     
         #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
         for i in range(len(Aircrafts_checked)):
-            if (ac_nextsteps[0] is not None and ac_nextsteps[0] == other_paths[i][0]) or \
-               (ac_nextsteps[1] is not None and ac_nextsteps[1] == other_paths[i][1]) or \
-               (ac_nextsteps[2] is not None and ac_nextsteps[2] == other_paths[i][2]):             
+            if ac_nextsteps[0] is not None and ac_nextsteps[0] == other_paths[i][0]:
                 Conflicted_aircraft = Aircrafts_checked[i]
-                print("own path",ac_nextsteps,"other path", other_paths[i])
-                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i],". Now starting conflict resolution.")
-                #self.Conflict_resolution(Conflicted_aircraft)
+                Conflicted_node = ac_nextsteps[0]
+                conflict_time = horizon_length[0]
+                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at ", Conflicted_node,". Now starting conflict resolution.")
+                #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+        
+            if ac_nextsteps[1] is not None and ac_nextsteps[1] == other_paths[i][1]:
+                Conflicted_aircraft = Aircrafts_checked[i]
+                Conflicted_node = ac_nextsteps[1]
+                conflict_time = horizon_length[1]
+                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at", Conflicted_node," Now starting conflict resolution.")
+                #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+
+            if ac_nextsteps[2] is not None and ac_nextsteps[2] == other_paths[i][2]:     
+                conflicted_aircraft = Aircrafts_checked[i]
+                conflicted_node = ac_nextsteps[2]
+                conflict_time = ac_nextsteps[2]                
+                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id,"at", conflicted_node,". Now starting conflict resolution.")
+                #Finds out if itselfs or the other needs to replan and replans if necessary
+                #self.Conflict_resolution(conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics)
+                return
+                
         
         return
     
-    def Conflict_resolution(self, conflicted_aircraft):
+    def Conflict_resolution(self, conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
         """
         Resolves the conflict between two aircrafts.
         """
         #find own priority level and that of the conflicted aircraft
-        self_priority = self.determine_prioritylevel()
-        conflicted_priority = conflicted_aircraft.determine_prioritylevel()
-        return
+        self_priority = self.determine_prioritylevel(t, edges_dict)
+        conflicted_priority = conflicted_aircraft.determine_prioritylevel(t, edges_dict)
+        if self_priority > conflicted_priority:
+            print("______________Priority of", self.id, "is higher than", conflicted_aircraft.id, ". No action needed.")
+            
+        if conflicted_priority > self_priority:
+            print("______________Priority of", self.id, "is lower than", conflicted_aircraft.id, ". Will replan.")
+            
+            #Add constraint to the conflicted aircraft
+            self.constraints.append({'agent': self.id, 'node_id': int(conflicted_node), 'timestep': int(conflict_time), 'positive': False})
+            self.plan_independent(nodes_dict, edges_dict, heuristics, t)
+            return
+        return 
 
             
     def request_taxibot(self, nodes_dict, taxibot_list, heuristics, t):
