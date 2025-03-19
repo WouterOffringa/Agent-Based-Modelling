@@ -158,49 +158,57 @@ class Aircraft(object):
 
         return ac_nextsteps
 
-    def conflict_detection(self, aircraft_lst, horizon_length, t, edges_dict,nodes_dict, heuristics):
+    def conflict_detection(self, aircraft_lst, horizon, t, edges_dict,nodes_dict, heuristics):
         """
         Detects if there is a conflict between two aircraft.
         """
         #Define own next 3 steps and request the next 3 steps of all other aircrafts that are taxxiing
-        other_paths = []
+        horizon_length = len(horizon)
+        dummynode = 1000
+        other_paths = {}
+        other_edges = {}
         Aircrafts_checked = []
-        ac_nextsteps = self.broadcast_next_nodes(horizon_length)
+        ac_nextsteps = self.broadcast_next_nodes(horizon)
+        ac_nextsteps_d = [step if step != None else dummynode for step in ac_nextsteps]
+        ac_nextsteps_d.append(dummynode)
+        ac_nextedges = [sorted((ac_nextsteps_d[tau], ac_nextsteps_d[tau+1])) for tau in range(horizon_length)]
         for ac in aircraft_lst:
-            if ac.status == "taxiing":
-                if ac.id != self.id:
-                    other_nextsteps = ac.broadcast_next_nodes(horizon_length)
-                    other_paths.append(other_nextsteps)
-                    Aircrafts_checked.append(ac)
+            if ac.status == "taxiing" and ac.id != self.id:
+                other_nextsteps = ac.broadcast_next_nodes(horizon)
+                other_paths[ac] = other_nextsteps
+                other_nextsteps_d = [step if step != None else dummynode for step in other_nextsteps]
+                other_nextsteps_d.append(dummynode)
+                other_edges[ac] = [sorted((other_nextsteps_d[tau], other_nextsteps_d[tau+1])) for tau in range(horizon_length)]
+                # other_paths.append(other_nextsteps)
+                Aircrafts_checked.append(ac)
                     
         #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
-        for i in range(len(Aircrafts_checked)):
-            if ac_nextsteps[0] is not None and ac_nextsteps[0] == other_paths[i][0]:
-                Conflicted_aircraft = Aircrafts_checked[i]
-                Conflicted_node = ac_nextsteps[0]
-                conflict_time = horizon_length[0]
-                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at ", Conflicted_node,". Now starting conflict resolution.")
-                #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
-        
-            if ac_nextsteps[1] is not None and ac_nextsteps[1] == other_paths[i][1]:
-                Conflicted_aircraft = Aircrafts_checked[i]
-                Conflicted_node = ac_nextsteps[1]
-                conflict_time = horizon_length[1]
-                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at", Conflicted_node," Now starting conflict resolution.")
-                #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+        # for i in range(len(Aircrafts_checked)):
+        #     for tau in range(timehorizon):
+        #         if ac_nextsteps[tau] is not None and ac_nextsteps[tau] == other_paths[i][tau]:
+        #             Conflicted_aircraft = Aircrafts_checked[i]
+        #             Conflicted_node = ac_nextsteps[tau]
+        #             conflict_time = horizon_length[tau]
+        #             print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at ", Conflicted_node,". Now starting conflict resolution.")
+        #             #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
 
-            if ac_nextsteps[2] is not None and ac_nextsteps[2] == other_paths[i][2]:     
-                conflicted_aircraft = Aircrafts_checked[i]
-                conflicted_node = ac_nextsteps[2]
-                conflict_time = ac_nextsteps[2]                
-                print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id,"at", conflicted_node,". Now starting conflict resolution.")
-                #Finds out if itselfs or the other needs to replan and replans if necessary
-                #self.Conflict_resolution(conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics)
-                return
-                
-        
-        return
-    
+        for ac in Aircrafts_checked:
+            for tau in range(horizon_length):
+                if ac_nextsteps[tau] != None and ac_nextsteps[tau] == other_paths[ac][tau]:
+                    Conflicted_aircraft = ac
+                    Conflicted_node = ac_nextsteps[tau]
+                    conflict_time = horizon[tau]
+                    print("______________Conflict detected between", self.id, "and", ac.id, " at ", Conflicted_node,". Now starting conflict resolution.")
+                    #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+
+                if dummynode not in ac_nextedges[tau] and ac_nextedges[tau] == other_edges[ac][tau]:
+                    Conflicted_aircraft = ac
+                    Conflicted_edge = ac_nextedges[tau]
+                    conflict_time = horizon[tau]
+                    print("______________Conflict detected between", self.id, "and", ac.id, " at ", Conflicted_edge,". Now starting conflict resolution.")
+                    #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+
+
     def Conflict_resolution(self, conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
         """
         Resolves the conflict between two aircrafts.
