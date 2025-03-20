@@ -49,8 +49,6 @@ def build_constraint_table(constraints, agent):
     max_timestep = -1  # the maximum timestep in these constraints
     #  collect constraints that are related to this agent
 
-    print("For debugging ", constraints)
-
     for constraint in constraints:
         if constraint['positive']:  # positive constraint is effective for everyone
             if constraint['agent'] == agent:
@@ -63,7 +61,6 @@ def build_constraint_table(constraints, agent):
             max_timestep = max(max_timestep, constraint['timestep'])
 
     constraint_table = [[] for _ in range(max_timestep + 1)]
-    print(constraint_table, "constraint_table")
     for constraint in positive:
         if len(constraint['node_id']) == 1:  # positive vertex constraint
             constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': True})
@@ -84,8 +81,6 @@ def build_constraint_table(constraints, agent):
                 {'node_id': [constraint['node_id'][1], constraint['node_id'][0]], 'positive': False})
         else:  # negative edge constraint
             constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
-    
-    print(constraint_table, "constraint_table filled out")
 
     return constraint_table
 
@@ -94,7 +89,7 @@ def is_constrained(curr_node, next_node, next_time, constraint_table):
 
     # TODO: check where the indexing of constraint_table is wrong, the constraints are not properly avoided now
 
-    if len(constraint_table) <= next_time: # added this /2
+    if len(constraint_table) <= next_time: 
         return False
 
     for constraint in constraint_table[int(next_time)]:

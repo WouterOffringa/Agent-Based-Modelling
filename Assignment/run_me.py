@@ -201,8 +201,8 @@ while running:
         timer.sleep(visualization_speed) 
       
     #Spawn aircraft for this timestep (use for example a random process)
-    # ==== Random Spawning ====
-    # spawning_time = 2
+    #==== Random Spawning ====
+    spawning_time = 1
     # if (t-1) % spawning_time == 0:
     #     i = len(aircraft_lst) + 1
     #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure

@@ -173,7 +173,11 @@ class Aircraft(object):
         ac_nextsteps_d.append(dummynode)
         ac_nextedges = [sorted((ac_nextsteps_d[tau], ac_nextsteps_d[tau+1])) for tau in range(horizon_length)]
         for ac in aircraft_lst:
-            if ac.status == "taxiing" and ac.id != self.id:
+            #only check aicraft with certain distance to own aircraft
+            position_ac = ac.position
+            position_self = self.position
+            distance = math.sqrt((position_ac[0]-position_self[0])**2 + (position_ac[1]-position_self[1])**2)
+            if distance < 3 and ac.status == "taxiing" and ac.id != self.id:            
                 other_nextsteps = ac.broadcast_next_nodes(horizon)
                 other_paths[ac] = other_nextsteps
                 other_nextsteps_d = [step if step != None else dummynode for step in other_nextsteps]
@@ -224,7 +228,7 @@ class Aircraft(object):
             
             #Add constraint to the conflicted aircraft
             self.constraints.append({'agent': self.id, 'node_id': [int(conflicted_node)], 'timestep': conflict_time, 'positive': False})
-            self.replan = True
+            self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
             return
         return 
