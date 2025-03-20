@@ -26,7 +26,7 @@ nodes_file = "nodes.xlsx" #xlsx file with for each node: id, x_pos, y_pos, type
 edges_file = "edges.xlsx" #xlsx file with for each edge: from  (node), to (node), length
 
 #Parameters that can be changed:
-simulation_time = 20
+simulation_time = 30
 planner = "Independent" #choose which planner to use (currently only Independent is implemented)
 
 #Visualization (can also be changed)
@@ -201,28 +201,33 @@ while running:
         timer.sleep(visualization_speed) 
       
     #Spawn aircraft for this timestep (use for example a random process)
-    spawning_time = 2
-    if (t-1) % spawning_time == 0:
-        i = len(aircraft_lst) + 1
-        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
-        if ac_type == 'A':
-            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
-            aircraft_lst.append(ac)
-        else:
-            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
-            aircraft_lst.append(ac)
+    # ==== Random Spawning ====
+    # spawning_time = 2
+    # if (t-1) % spawning_time == 0:
+    #     i = len(aircraft_lst) + 1
+    #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
+    #     if ac_type == 'A':
+    #         ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+    #         aircraft_lst.append(ac)
+    #     else:
+    #         ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+    #         aircraft_lst.append(ac)
+    #     constraints = []
 
-        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
-        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
-        # ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
-        # ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
-        # aircraft_lst.append(ac)
-        # aircraft_lst.append(ac1)
-        # aircraft_lst.append(ac2)
-        # aircraft_lst.append(ac3)
+    # ==== Fixed Spawning ====
+    spawning_time = 20
+    if (t-1) % spawning_time == 0:
+        ac = Aircraft(1, 'A', 37,36,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
+        ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
+        aircraft_lst.append(ac)
+        aircraft_lst.append(ac1)
+        ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
+        ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
+        aircraft_lst.append(ac2)
+        aircraft_lst.append(ac3)
         #constraints = [{'agent': 1, 'node_id': [n], 'timestep': tc, 'positive': False}
                        #for n in range(18,23) for tc in range(3,10)]
-        constraints = []
+        constraints = []   
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 

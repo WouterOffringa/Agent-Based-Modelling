@@ -198,15 +198,15 @@ class Aircraft(object):
                     Conflicted_aircraft = ac
                     Conflicted_node = ac_nextsteps[tau]
                     conflict_time = horizon[tau]
-                    print("______________Conflict detected between", self.id, "and", ac.id, " at ", Conflicted_node,". Now starting conflict resolution.")
-                    #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+                    print("______________Conflict detected between", self.id, "and", ac.id, " at node ", int(Conflicted_node),". Now starting conflict resolution.")
+                    self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
 
                 if dummynode not in ac_nextedges[tau] and ac_nextedges[tau] == other_edges[ac][tau]:
                     Conflicted_aircraft = ac
                     Conflicted_edge = ac_nextedges[tau]
                     conflict_time = horizon[tau]
-                    print("______________Conflict detected between", self.id, "and", ac.id, " at ", Conflicted_edge,". Now starting conflict resolution.")
-                    #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+                    print("______________Conflict detected between", self.id, "and", ac.id, " at node ", int(Conflicted_edge),". Now starting conflict resolution.")
+                    self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
 
 
     def Conflict_resolution(self, conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
@@ -223,7 +223,8 @@ class Aircraft(object):
             print("______________Priority of", self.id, "is lower than", conflicted_aircraft.id, ". Will replan.")
             
             #Add constraint to the conflicted aircraft
-            self.constraints.append({'agent': self.id, 'node_id': int(conflicted_node), 'timestep': int(conflict_time), 'positive': False})
+            self.constraints.append({'agent': self.id, 'node_id': [int(conflicted_node)], 'timestep': conflict_time, 'positive': False})
+            self.replan = True
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
             return
         return 

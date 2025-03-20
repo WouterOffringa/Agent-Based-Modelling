@@ -48,28 +48,38 @@ def build_constraint_table(constraints, agent):
     negative = []  # to collect negative constraints
     max_timestep = -1  # the maximum timestep in these constraints
     #  collect constraints that are related to this agent
+
+    print("For debugging ", constraints)
+
     for constraint in constraints:
         if constraint['positive']:  # positive constraint is effective for everyone
             if constraint['agent'] == agent:
                 positive.append(constraint)
             else:
                 negative.append(constraint)
-            max_timestep = max(max_timestep, constraint['timestep'])
+            max_timestep = int(2*max(max_timestep, constraint['timestep']))
         elif constraint['agent'] == agent:  # negative constraint is effective for only one agent
             negative.append(constraint)
-            max_timestep = max(max_timestep, constraint['timestep'])
+            print(constraint['timestep'], "constraint['timestep']")
+            max_timestep = int(2*max(max_timestep, constraint['timestep']))
 
     constraint_table = [[] for _ in range(max_timestep + 1)]
+    print(constraint_table, "constraint_table")
     for constraint in positive:
+        dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # positive vertex constraint
-            constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': True})
+            constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': True})
         else:  # positive edge constraint
             constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': True})
             constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': True})
 
+
+    # TODO: only negative vertex constraints works for now
+
     for constraint in negative:
+        dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # vertex constraint
-            constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
+            constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': False, 'timestep': constraint['timestep']})
         elif constraint['positive']:  # positive edge constraint for other agents
             constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': False})
             constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': False})
@@ -77,13 +87,17 @@ def build_constraint_table(constraints, agent):
                 {'node_id': [constraint['node_id'][1], constraint['node_id'][0]], 'positive': False})
         else:  # negative edge constraint
             constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
+    
+    print(constraint_table, "constraint_table filled out")
 
     return constraint_table
 
 
 def is_constrained(curr_node, next_node, next_time, constraint_table):
 
-    if len(constraint_table) <= next_time:
+    # TODO: check where the indexing of constraint_table is wrong, the constraints are not properly avoided now
+
+    if len(constraint_table)/2 <= next_time: # added this /2
         return False
 
     for constraint in constraint_table[int(next_time)]:
@@ -122,11 +136,14 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
         if curr['node_id'] == goal_node and curr['timestep'] > earliest_goal_timestep:
             found = True
             if curr['timestep'] + 1 < len(constraint_table):
-                for t in range(curr['timestep'] + 1, len(constraint_table)):
-                    if is_constrained(goal_node, goal_node, t, constraint_table):
-                        found = False
-                        earliest_goal_timestep = t + 1
-                        break
+                print(constraint_table[-1][0]['timestep'], "constraint_table[-1][0]['timestep']")
+                if curr['timestep'] + 1 < constraint_table[-1][0]['timestep']:
+                    print(curr['timestep'], "curr['timestep']")
+                    for t in range(curr['timestep'] + 1, len(constraint_table)):
+                        if is_constrained(goal_node, goal_node, t, constraint_table):
+                            found = False
+                            earliest_goal_timestep = t + 1
+                            break
             if found:
                 return True, get_path(curr)
         # Substitution for move()
