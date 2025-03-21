@@ -21,6 +21,7 @@ class Taxibot(object):
         self.holding_location = holding_location    #holding_location_node_id
         self.nodes_dict = nodes_dict                #keep copy of nodes dict
         self.status = "available"                   #begin status
+        self.planning_status = None            #ensure we dont plan when we are taxxiing already
         self.idle = True                            #If idling, to keep aircraft on the map without a driving plan
 
         #State related
@@ -148,11 +149,13 @@ class Taxibot(object):
     
     def Taxi_to_holding(self, t):
         self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
+        #once it has planned a route, set the status to taxxiing
+        self.planning_status == "taxiing"
         return
     
     def Taxi_to_AC(self, t):
         self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
-
+        self.planning_status == "taxiing"
         return
 
     def broadcast_next_nodes(self, horizon_length):
