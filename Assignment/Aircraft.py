@@ -1,4 +1,4 @@
-from single_agent_planner import simple_single_agent_astar
+from single_agent_planner_v2 import simple_single_agent_astar
 import math
 
 class Aircraft(object):
@@ -29,10 +29,17 @@ class Aircraft(object):
         self.status = None 
         self.path_to_goal = [] #planned path left from current location
         self.from_to = [0,0]
+        self.constraints = []
 
         #State related
         self.heading = 0
         self.position = (0,0) #xy position on map
+        self.delay = 0
+
+        #Replanning related
+        self.last_node = None
+        self.replan = False
+    
 
     def get_heading(self, xy_start, xy_next):
         """
@@ -80,13 +87,18 @@ class Aircraft(object):
         distance_to_move = self.speed*dt #distance to move in this timestep
   
         #Update position with rounded values
-        x = xy_to[0]-xy_from[0]
-        y = xy_to[1]-xy_from[1]
-        x_normalized = x / math.sqrt(x**2+y**2)
-        y_normalized = y / math.sqrt(x**2+y**2)
-        posx = round(self.position[0] + x_normalized * distance_to_move ,2) #round to prevent errors
-        posy = round(self.position[1] + y_normalized * distance_to_move ,2) #round to prevent errors
-        self.position = (posx, posy)  
+        x = xy_to[0] - xy_from[0]
+        y = xy_to[1] - xy_from[1]
+        norm = math.sqrt(x**2 + y**2)
+        if norm != 0:
+            x_normalized = x / norm
+            y_normalized = y / norm
+        else:
+            x_normalized = 0
+            y_normalized = 0
+        posx = round(self.position[0] + x_normalized * distance_to_move, 2) # round to prevent errors
+        posy = round(self.position[1] + y_normalized * distance_to_move, 2) # round to prevent errors
+        self.position = (posx, posy)
         self.get_heading(xy_from, xy_to)	
 
         #Check if goal is reached or if to_node is reached
@@ -119,20 +131,159 @@ class Aircraft(object):
             start_node = self.start #node from which planning should be done
             goal_node = self.goal #node to which planning should be done
             
-            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, t)
+            if self.replan == False:
+                success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+            if self.replan == True:
+                print("______________Replanning for", self.id, "with", len(self.constraints), "constraints:", self.constraints)
+                success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+                self.replan = False
+            #Make sure the path is broadcasted to some central location
+
             if success:
                 self.path_to_goal = path[1:]
                 next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
                 self.from_to = [path[0][0], next_node_id]
-                print("Path AC", self.id, ":", path)
+                #print("Path AC", self.id, ":", path)
             else:
                 raise Exception("No solution found for", self.id)
             
             #Check the path
             if path[0][1] != t:
                 raise Exception("Something is wrong with the timing of the path planning")
+            
+    def broadcast_next_nodes(self, horizon_length):
+        """
+        Find and broadcasts the next nodes when requested to the central location.
+        """
+        ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon_length]
+        if len(ac_nextsteps) == 1:
+            ac_nextsteps.append(None)
+            ac_nextsteps.append(None)
+        elif len(ac_nextsteps) == 2:
+            ac_nextsteps.append(None)
 
-    
+        return ac_nextsteps
+
+    def conflict_detection(self, aircraft_lst, horizon, t, edges_dict,nodes_dict, heuristics):
+        """
+        Detects if there is a conflict between two aircraft.
+        """
+        #Define own next 3 steps and request the next 3 steps of all other aircrafts that are taxxiing
+        horizon_length = len(horizon)
+        dummynode = 1000
+        other_paths = {}
+        other_edges = {}
+        Aircrafts_checked = []
+        ac_nextsteps = self.broadcast_next_nodes(horizon)
+        ac_nextsteps_d = [step if step != None else dummynode for step in ac_nextsteps]
+        ac_nextsteps_d.append(dummynode)
+        ac_nextedges = [sorted((ac_nextsteps_d[tau], ac_nextsteps_d[tau+1])) for tau in range(horizon_length)]
+        for ac in aircraft_lst:
+            if ac.status == "taxiing" and ac.id != self.id:
+                other_nextsteps = ac.broadcast_next_nodes(horizon)
+                other_paths[ac] = other_nextsteps
+                other_nextsteps_d = [step if step != None else dummynode for step in other_nextsteps]
+                other_nextsteps_d.append(dummynode)
+                other_edges[ac] = [sorted((other_nextsteps_d[tau], other_nextsteps_d[tau+1])) for tau in range(horizon_length)]
+                # other_paths.append(other_nextsteps)
+                Aircrafts_checked.append(ac)
+                    
+        #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
+        # for i in range(len(Aircrafts_checked)):
+        #     for tau in range(timehorizon):
+        #         if ac_nextsteps[tau] is not None and ac_nextsteps[tau] == other_paths[i][tau]:
+        #             Conflicted_aircraft = Aircrafts_checked[i]
+        #             Conflicted_node = ac_nextsteps[tau]
+        #             conflict_time = horizon_length[tau]
+        #             print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at ", Conflicted_node,". Now starting conflict resolution.")
+        #             #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+
+        for ac in Aircrafts_checked:
+            for tau in range(horizon_length):
+                if ac_nextsteps[tau] != None and ac_nextsteps[tau] == other_paths[ac][tau]:
+                    Conflicted_aircraft = ac
+                    Conflicted_node = ac_nextsteps[tau]
+                    conflict_time = horizon[tau]
+                    print("______Conflict detected between", self.id, "and", ac.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
+                    self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+
+                if dummynode not in ac_nextedges[tau] and ac_nextedges[tau] == other_edges[ac][tau]:
+                    Conflicted_aircraft = ac
+                    Conflicted_edge = ac_nextedges[tau]
+                    conflict_time = horizon[tau]
+                    print("______Conflict detected between", self.id, "and", ac.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
+                    self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, int(Conflicted_edge[1]), conflict_time, heuristics)
 
 
+    def Conflict_resolution(self, conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
+        """
+        Resolves the conflict between two aircrafts.
+        """
+
+        # TODO add conflict resolution for edge conflicts
+
+        #find own priority level and that of the conflicted aircraft
+        self_priority = self.determine_prioritylevel(t, edges_dict)
+        conflicted_priority = conflicted_aircraft.determine_prioritylevel(t, edges_dict)
+
+        if self_priority > conflicted_priority:
+            print("__________Priority of", self.id, "is higher than", conflicted_aircraft.id, ". No action needed.")
+            
+        if conflicted_priority > self_priority or self_priority == conflicted_priority:
+            print("__________Priority of", self.id, "is lower than", conflicted_aircraft.id, ". Will replan.")
+            
+            #Add constraint to the conflicted aircraft
+            self.constraints.append({'agent': self.id, 'node_id': [int(conflicted_node)], 'timestep': conflict_time, 'positive': False})
+            self.replan = True
+            self.plan_independent(nodes_dict, edges_dict, heuristics, t)
+            return
+        return 
+
+            
+    def request_taxibot(self, nodes_dict, taxibot_list, heuristics, t):
+        """
+        Requests a taxibot for the aircraft.
+        """
+        #Initialize the list of the traveltimes from each taxibot to the aircraft
+        traveltime_list = []
+        for taxibot in taxibot_list:
+            if taxibot.status == "available":
+                #Calculate the distance between the taxibot and the aircraft
+                taxibot_pos = taxibot.position
+                aircraft_pos = self.position
                 
+                path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t)
+                travel_time = path[-1][1] #The final timestep arrival time
+                traveltime_list.append(travel_time)
+            else:
+                traveltime_list.append(10000)
+
+    def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
+                                            'delay': 2,
+                                            'movementoptions': 8,
+                                            'pickup': 7
+                                            }):
+
+        # print("Determining priority level for", self.id)
+
+        # Taxibots that aren't doing anything have absolute lowest priority
+        if self.status == "unassigned":
+            return -1000
+        
+        else:
+            return sum([
+                        (self.path_to_goal[-1][1] - t)*weights['routelength'], # Remaining route length (Agents with a shorter time to go get a smaller penalty)
+                        self.delay*weights['delay'], # Agents that have already experienced delay get higher priority
+                        (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[1]]))*weights['movementoptions'], # Amount of connected nodes to the current node, weighs how easy it is to get out of the way
+                        (self.status == "pickup") * weights["pickup"] # Taxibots that are picking up an aircraft have higher priority
+                        ])
+
+                        # TODO: Maybe change from_to[0] to from_to[1], try it if stuff breaks - Cijsouw
+
+                        # I changed it to from_to[1] because the from_to[0] is the current node, and the from_to[1] is the next node,
+                        # this gave better results for the test cases. Not sure if this is implemented completely correctly though - Offringa
+
+
+
+
+

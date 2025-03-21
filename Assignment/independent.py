@@ -2,7 +2,7 @@
 This is an example planner, that calls all agents to plan their route independently.
 """
 
-def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t):
+def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=[]):
     for ac in aircraft_lst:
         if ac.spawntime == t:
             ac.status = "taxiing" 
