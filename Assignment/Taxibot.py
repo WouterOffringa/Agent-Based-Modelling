@@ -67,29 +67,30 @@ class Taxibot(object):
             - nodes_dict: copy of the nodes_dict
             - edges_dict: edges_dict with current edge weights
         """
-        
-        if self.status == "taxiing":
-            start_node = self.start #node from which planning should be done
-            goal_node = self.goal #node to which planning should be done
-            
-            if self.replan == False:
-                success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
-            if self.replan == True:
-                success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
-                self.replan = False
-            #Make sure the path is broadcasted to some central location
+        if self.status == "available" and self.idle == False:
+            start_node = self.from_to[0] #node from which planning should be done
+            goal_node = self.holding_location #node to which planning should be done
+        if self.status == "unavailable" and self.idle == False:
+            start_node = self.from_to[0] #node from which planning should be done
+            goal_node = self.goal_node #Should be the node of the AC it is going to go to
 
-            if success:
-                self.path_to_goal = path[1:]
-                next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
-                self.from_to = [path[0][0], next_node_id]
-                #print("Path AC", self.id, ":", path)
-            else:
-                raise Exception("No solution found for", self.id)
-            
-            #Check the path
-            if path[0][1] != t:
-                raise Exception("Something is wrong with the timing of the path planning")
+        success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+
+        success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+
+        #Make sure the path is broadcasted to some central location
+
+        if success:
+            self.path_to_goal = path[1:]
+            next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
+            self.from_to = [path[0][0], next_node_id]
+            #print("Path AC", self.id, ":", path)
+        else:
+            raise Exception("No solution found for", self.id)
+        
+        #Check the path
+        if path[0][1] != t:
+            raise Exception("Something is wrong with the timing of the path planning")
 
     def move(self, dt, t):   
         """
@@ -133,32 +134,6 @@ class Taxibot(object):
                 
                 self.from_to = [new_from_id, new_next_id] #update new from and to node
 
-
-    def plan_independent(self, nodes_dict, edges_dict, heuristics, t):
-        """
-        Plans a path for taxiing aircraft assuming that it knows the entire layout.
-        Other traffic is not taken into account.
-        INPUT:
-            - nodes_dict: copy of the nodes_dict
-            - edges_dict: edges_dict with current edge weights
-        """
-        
-        if self.status == "taxiing":
-            start_node = self.start #node from which planning should be done
-            goal_node = self.goal #node to which planning should be done
-            
-            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, t)
-            if success:
-                self.path_to_goal = path[1:]
-                next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
-                self.from_to = [path[0][0], next_node_id]
-                print("Path AC", self.id, ":", path)
-            else:
-                raise Exception("No solution found for", self.id)
-            
-            #Check the path
-            if path[0][1] != t:
-                raise Exception("Something is wrong with the timing of the path planning")
     
     def Hold_position(self, t):
         if self.idle == True:
@@ -167,6 +142,18 @@ class Taxibot(object):
             self.path_to_goal = [(self.holding_location, t+0.5), (self.holding_location, t+1), (self.holding_location, t+1.5)]
         else:
             raise Exception("Taxibot is not idle, cannot hold position")
+
+    def Follow_AC(self, t):
+        return
+    
+    def Taxi_to_holding(self, t):
+        self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
+        return
+    
+    def Taxi_to_AC(self, t):
+        self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
+
+        return
 
     def broadcast_next_nodes(self, horizon_length):
         """
