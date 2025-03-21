@@ -240,17 +240,20 @@ class Aircraft(object):
         """
         #Initialize the list of the traveltimes from each taxibot to the aircraft
         traveltime_list = []
+        print("I'm in request function")
         for taxibot in taxibot_list:
+            print("I'm in the for loop in the request function")
             if taxibot.status == "available":
                 #Calculate the distance between the taxibot and the aircraft
                 taxibot_pos = taxibot.position
                 aircraft_pos = self.position
                 
-                path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t)
+                path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t) ### This path should be used by the taxibot to move to aircraft)
                 travel_time = path[-1][1] #The final timestep arrival time
                 traveltime_list.append(travel_time)
             else:
                 traveltime_list.append(10000)
+            #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
                                             'delay': 3,
