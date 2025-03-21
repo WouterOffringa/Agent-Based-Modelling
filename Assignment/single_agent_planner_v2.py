@@ -49,8 +49,6 @@ def build_constraint_table(constraints, agent):
     max_timestep = -1  # the maximum timestep in these constraints
     #  collect constraints that are related to this agent
 
-    print("For debugging ", constraints)
-
     for constraint in constraints:
         if constraint['positive']:  # positive constraint is effective for everyone
             if constraint['agent'] == agent:
@@ -60,11 +58,10 @@ def build_constraint_table(constraints, agent):
             max_timestep = int(2*max(max_timestep, constraint['timestep']))
         elif constraint['agent'] == agent:  # negative constraint is effective for only one agent
             negative.append(constraint)
-            print(constraint['timestep'], "constraint['timestep']")
+            # print(constraint['timestep'], "constraint['timestep']")
             max_timestep = int(2*max(max_timestep, constraint['timestep']))
 
     constraint_table = [[] for _ in range(max_timestep + 1)]
-    print(constraint_table, "constraint_table")
     for constraint in positive:
         dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # positive vertex constraint
@@ -88,19 +85,15 @@ def build_constraint_table(constraints, agent):
         else:  # negative edge constraint
             constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
     
-    print(constraint_table, "constraint_table filled out")
-
     return constraint_table
 
 
 def is_constrained(curr_node, next_node, next_time, constraint_table):
 
-    # TODO: check where the indexing of constraint_table is wrong, the constraints are not properly avoided now
-
-    if len(constraint_table)/2 <= next_time: # added this /2
+    if len(constraint_table) <= 2*next_time:
         return False
 
-    for constraint in constraint_table[int(next_time)]:
+    for constraint in constraint_table[int(2*next_time)]:
         if constraint['positive']:  # positive constraint
             if constraint['node_id'][0] != next_node:
                 return True
@@ -136,20 +129,17 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
         if curr['node_id'] == goal_node and curr['timestep'] > earliest_goal_timestep:
             found = True
             if curr['timestep'] + 1 < len(constraint_table):
-                print(constraint_table[-1][0]['timestep'], "constraint_table[-1][0]['timestep']")
-                if curr['timestep'] + 1 < constraint_table[-1][0]['timestep']:
-                    print(curr['timestep'], "curr['timestep']")
-                    for t in range(curr['timestep'] + 1, len(constraint_table)):
-                        if is_constrained(goal_node, goal_node, t, constraint_table):
-                            found = False
-                            earliest_goal_timestep = t + 1
-                            break
+                for t in range(int(curr['timestep']) + 1, len(constraint_table)):
+                    if is_constrained(goal_node, goal_node, t, constraint_table):
+                        found = False
+                        earliest_goal_timestep = t + 1
+                        break
             if found:
                 return True, get_path(curr)
         # Substitution for move()
         child_nodes = nodedict[curr['node_id']]['neighbors'] | {curr['node_id']}
         for child_node in child_nodes: 
-            if is_constrained(curr['node_id'], child_node, curr['timestep'] + 1, constraint_table):
+            if is_constrained(curr['node_id'], child_node, curr['timestep'] + 0.5, constraint_table):
                 continue
             child = {'node_id': child_node,
                     'g_val': curr['g_val'] + 0.5,

@@ -30,9 +30,10 @@ simulation_time = 30
 planner = "Independent" #choose which planner to use (currently only Independent is implemented)
 
 #Visualization (can also be changed)
-plot_graph = False    #show graph representation in NetworkX
-visualization = True        #pygame visualization
-visualization_speed = 0.1 #set at 0.1 as default
+plot_graph = False                      # show graph representation in NetworkX
+visualization = True                    # pygame visualization
+slow_factor = 1                         # 5 here means 5 times slower
+visualization_speed = 0.1*slow_factor   # set at 0.1 as default
 
 #%%Function definitions
 def import_layout(nodes_file, edges_file):
@@ -170,7 +171,7 @@ time_end = simulation_time
 dt = 0.1 #should be factor of 0.5 (0.5/dt should be integer)
 t= 0
 
-print("Simulation Started")
+print("\nSimulation Started\n")
 while running:
 
     t= round(t,2)    
@@ -202,32 +203,43 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    # spawning_time = 2
-    # if (t-1) % spawning_time == 0:
-    #     i = len(aircraft_lst) + 1
-    #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
-    #     if ac_type == 'A':
-    #         ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
-    #         aircraft_lst.append(ac)
-    #     else:
-    #         ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
-    #         aircraft_lst.append(ac)
-    #     constraints = []
+    spawning_time = 2
+    if (t-1) % spawning_time == 0:
+        i = len(aircraft_lst) + 1
+        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
+        if ac_type == 'A':
+            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+            aircraft_lst.append(ac)
+        else:
+            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+            aircraft_lst.append(ac)
+        constraints = []
 
     # ==== Fixed Spawning ====
-    spawning_time = 20
-    if (t-1) % spawning_time == 0:
-        ac = Aircraft(1, 'A', 37,36,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
-        ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
-        aircraft_lst.append(ac)
-        aircraft_lst.append(ac1)
-        ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) #As an example we will create one aicraft arriving at node 37 with the goal of reaching node 36
-        ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)#As an example we will create one aicraft arriving at node 36 with the goal of reaching node 37
-        aircraft_lst.append(ac2)
-        aircraft_lst.append(ac3)
-        #constraints = [{'agent': 1, 'node_id': [n], 'timestep': tc, 'positive': False}
-                       #for n in range(18,23) for tc in range(3,10)]
-        constraints = []   
+    # spawning_time = 20
+    # if (t-1) % spawning_time == 0:
+        # case 1 - 4 aircraft which touch in the bottom right corner
+        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
+        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
+        # ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
+        # ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
+        # aircraft_lst.append(ac)
+        # aircraft_lst.append(ac1)
+        # aircraft_lst.append(ac2)
+        # aircraft_lst.append(ac3)
+        
+        # case 2 - 4 aircraft which needs to cross diagonally
+        # ac = Aircraft(1, 'A', 37,34,t, nodes_dict) 
+        # ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
+        # aircraft_lst.append(ac)
+        # aircraft_lst.append(ac1)
+        # ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict) 
+        # ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
+        # aircraft_lst.append(ac2)
+        # aircraft_lst.append(ac3)
+
+
+        # constraints = []   
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
