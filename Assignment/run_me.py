@@ -245,6 +245,10 @@ while running:
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
+            for ac in aircraft_lst:
+                print("I'm just before the request function")
+                ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
         #implement the check to see if two aircraft will collide with eachother
