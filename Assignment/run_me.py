@@ -16,6 +16,7 @@ from visualization import map_initialization, map_running
 from Aircraft import Aircraft
 from Taxibot import Taxibot
 from independent import run_independent_planner
+from independent import run_independent_planner_tugs
 from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
@@ -147,8 +148,7 @@ graph = create_graph(nodes_dict, edges_dict, plot_graph)
 heuristics = calc_heuristics(graph, nodes_dict)
 
 aircraft_lst = []   #List which can contain aircraft agents
-tug_lst = []
-# tug_lst = [Taxibot(i, [7, 9, 16, 23, 107][i], [7, 9, 16, 23, 107][i]) for i in range(5)] # List of tugs
+tug_lst = []    #List which can contain tug agents  
 
 if visualization:
     map_properties = map_initialization(nodes_dict, edges_dict) #visualization properties
@@ -202,7 +202,7 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     #==== Random Spawning ====
-    spawning_time = 1
+    #spawning_time = 1
     # if (t-1) % spawning_time == 0:
     #     i = len(aircraft_lst) + 1
     #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
@@ -228,6 +228,20 @@ while running:
         #constraints = [{'agent': 1, 'node_id': [n], 'timestep': tc, 'positive': False}
                        #for n in range(18,23) for tc in range(3,10)]
         constraints = []   
+    
+    # ==== Spawning the taxibots ====
+    spawning_locations = [7, 9, 16, 23, 107]
+    if t == 0:
+        for i, location in enumerate(spawning_locations, start=1):
+            tug = Taxibot(i, location, location, nodes_dict)
+            tug_lst.append(tug)
+            tug.idle = True
+
+        # ==== Spawning the aircraft ====
+        constraints = []
+        run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+
+
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
@@ -236,7 +250,10 @@ while running:
         #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:
             PriorityDetector(aircraft_lst, t, edges_dict, nodes_dict, heuristics)
-            
+        
+        #Check the planning for the taxibots
+
+        run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
             
         
     elif planner == "Prioritized":
