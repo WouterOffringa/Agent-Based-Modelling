@@ -16,6 +16,7 @@ from visualization import map_initialization, map_running
 from Aircraft import Aircraft
 from Taxibot import Taxibot
 from independent import run_independent_planner
+from independent import run_independent_planner_tugs
 from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
@@ -148,8 +149,7 @@ graph = create_graph(nodes_dict, edges_dict, plot_graph)
 heuristics = calc_heuristics(graph, nodes_dict)
 
 aircraft_lst = []   #List which can contain aircraft agents
-tug_lst = []
-# tug_lst = [Taxibot(i, [7, 9, 16, 23, 107][i], [7, 9, 16, 23, 107][i]) for i in range(5)] # List of tugs
+tug_lst = []    #List which can contain tug agents  
 
 if visualization:
     map_properties = map_initialization(nodes_dict, edges_dict) #visualization properties
@@ -239,17 +239,62 @@ while running:
         # aircraft_lst.append(ac3)
 
 
-        # constraints = []   
+        # constraints = []
+        
+    
+    # ==== Spawning the taxibots ====
+    spawning_locations = [7, 9, 16, 23, 107]
+    if t == 0:
+        for i, location in enumerate(spawning_locations, start=1):
+            tug = Taxibot(i, location, location, nodes_dict)
+            tug_lst.append(tug)
+            tug.idle = True
+
+        run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+        
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
-            run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+            for ac in aircraft_lst:
+                print("I'm just before the request function")
+                run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+                #print(heuristics)
+                #ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+                ## This function above should return the 'winning taxibot'
+
+                ## Goal node of winning tug is set to current position aircraft
+                # tug.goal_node = ac.start
+
+                ## Winning taxibot starts taxiing to ac, so idle is false en unavailable
+                #tug.idle == False
+                #tug.status == 'unavailable'
+
+                ##Now aircraft should still be holding and taxibot is now moving to ac
+
+                ##Taxibot arrives at aircraft (goal node)?
+
+                ## At time of arrival taxibot: aircraft plans it's own route and tug follows the ac
+                #tug.idle == True
+                # run ac planner? ac status set to taxiing
+
+                ##Ac now in control and is taxxing
+
+                ##Ac arrival goal node: Tug set back in control to plan it's route and be available (deconnect from aircraft)
+                #tug.idle == False
+                #tug.status == 'available'
+
+
+            
 
         #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:
             PriorityDetector(aircraft_lst, t, edges_dict, nodes_dict, heuristics)
-            
-            
+
+
+        #Check the planning for the taxibots
+        if t % 0.5 == 0:
+            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+
         
     elif planner == "Prioritized":
         run_prioritized_planner()

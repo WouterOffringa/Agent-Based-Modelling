@@ -55,7 +55,7 @@ def build_constraint_table(constraints, agent):
                 positive.append(constraint)
             else:
                 negative.append(constraint)
-            max_timestep = int(2*max(max_timestep, constraint['timestep']))
+            max_timestep = max(max_timestep, constraint['timestep'])
         elif constraint['agent'] == agent:  # negative constraint is effective for only one agent
             negative.append(constraint)
             # print(constraint['timestep'], "constraint['timestep']")
@@ -63,9 +63,8 @@ def build_constraint_table(constraints, agent):
 
     constraint_table = [[] for _ in range(max_timestep + 1)]
     for constraint in positive:
-        dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # positive vertex constraint
-            constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': True})
+            constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': True})
         else:  # positive edge constraint
             constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': True})
             constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': True})
@@ -74,9 +73,8 @@ def build_constraint_table(constraints, agent):
     # TODO: only negative vertex constraints works for now
 
     for constraint in negative:
-        dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # vertex constraint
-            constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': False, 'timestep': constraint['timestep']})
+            constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False, 'timestep': constraint['timestep']})
         elif constraint['positive']:  # positive edge constraint for other agents
             constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': False})
             constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': False})
@@ -84,7 +82,6 @@ def build_constraint_table(constraints, agent):
                 {'node_id': [constraint['node_id'][1], constraint['node_id'][0]], 'positive': False})
         else:  # negative edge constraint
             constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
-    
     return constraint_table
 
 
@@ -115,6 +112,7 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
     open_list = []
     closed_list = dict()
     earliest_goal_timestep = current_time
+    print(start_node)
     h_value = h_values[start_node][start_node]
     root = {'node_id': start_node,
             'g_val': 0,

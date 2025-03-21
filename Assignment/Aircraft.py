@@ -26,7 +26,7 @@ class Aircraft(object):
         self.nodes_dict = nodes_dict #keep copy of nodes dict
         
         #Route related
-        self.status = None 
+        self.status = "holding"
         self.path_to_goal = [] #planned path left from current location
         self.from_to = [0,0]
         self.constraints = []
@@ -179,7 +179,11 @@ class Aircraft(object):
         ac_nextsteps_d.append(dummynode)
         ac_nextedges = [sorted((ac_nextsteps_d[tau], ac_nextsteps_d[tau+1])) for tau in range(horizon_length)]
         for ac in aircraft_lst:
-            if ac.status == "taxiing" and ac.id != self.id:
+            #only check aicraft with certain distance to own aircraft
+            position_ac = ac.position
+            position_self = self.position
+            distance = math.sqrt((position_ac[0]-position_self[0])**2 + (position_ac[1]-position_self[1])**2)
+            if distance < 3 and ac.status == "taxiing" and ac.id != self.id:            
                 other_nextsteps = ac.broadcast_next_nodes(horizon)
                 other_paths[ac] = other_nextsteps
                 other_nextsteps_d = [step if step != None else dummynode for step in other_nextsteps]
@@ -215,6 +219,7 @@ class Aircraft(object):
                     self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, int(Conflicted_edge[1]), conflict_time, heuristics)
 
 
+
     def Conflict_resolution(self, conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
         """
         Resolves the conflict between two aircrafts.
@@ -223,6 +228,7 @@ class Aircraft(object):
         # TODO add conflict resolution for edge conflicts
 
         #find own priority level and that of the conflicted aircraft
+        print("in conflict resultion of ", self.id)
         self_priority = self.determine_prioritylevel(t, edges_dict)
         conflicted_priority = conflicted_aircraft.determine_prioritylevel(t, edges_dict)
 
@@ -234,7 +240,7 @@ class Aircraft(object):
             
             #Add constraint to the conflicted aircraft
             self.constraints.append({'agent': self.id, 'node_id': [int(conflicted_node)], 'timestep': conflict_time, 'positive': False})
-            self.replan = True
+            self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
             return
         return 
@@ -247,16 +253,19 @@ class Aircraft(object):
         #Initialize the list of the traveltimes from each taxibot to the aircraft
         traveltime_list = []
         for taxibot in taxibot_list:
+            print("I'm in the for loop in the request function")
             if taxibot.status == "available":
                 #Calculate the distance between the taxibot and the aircraft
-                taxibot_pos = taxibot.position
-                aircraft_pos = self.position
-                
-                path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t)
+                taxibot_pos = taxibot.from_to[0]
+                print('taxibot position is', taxibot_pos)
+                print('Aircraft position is', aircraft_pos)
+                print("Available keys in h_values:", list(heuristics.keys()))
+                path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t) ### This path should be used by the taxibot to move to aircraft)
                 travel_time = path[-1][1] #The final timestep arrival time
                 traveltime_list.append(travel_time)
             else:
                 traveltime_list.append(10000)
+            #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
                                             'delay': 2,

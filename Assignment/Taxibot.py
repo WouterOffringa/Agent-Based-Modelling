@@ -21,6 +21,15 @@ class Taxibot(object):
         self.holding_location = holding_location    #holding_location_node_id
         self.nodes_dict = nodes_dict                #keep copy of nodes dict
         self.status = "available"                   #begin status
+        self.planning_status = None            #ensure we dont plan when we are taxxiing already
+        self.idle = True                            #If idling, to keep aircraft on the map without a driving plan
+
+        #Route related
+                #Route related
+        self.status = "holding"
+        self.path_to_goal = [] #planned path left from current location
+        self.from_to = [0,0]
+        self.constraints = []
 
         #State related
         self.heading = 0
@@ -58,6 +67,38 @@ class Taxibot(object):
     
         self.heading = heading
 
+    def plan_independent(self, nodes_dict, edges_dict, heuristics, t):
+        """
+        Plans a path for taxiing aircraft assuming that it knows the entire layout.
+        Other traffic is not taken into account.
+        INPUT:
+            - nodes_dict: copy of the nodes_dict
+            - edges_dict: edges_dict with current edge weights
+        """
+        if self.status == "available" and self.idle == False:
+            start_node = self.from_to[0] #node from which planning should be done
+            goal_node = self.holding_location #node to which planning should be done
+        if self.status == "unavailable" and self.idle == False:
+            start_node = self.from_to[0] #node from which planning should be done
+            goal_node = self.goal_node #Should be the node of the AC it is going to go to
+
+        success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+
+        success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+
+        #Make sure the path is broadcasted to some central location
+
+        if success:
+            self.path_to_goal = path[1:]
+            next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
+            self.from_to = [path[0][0], next_node_id]
+            #print("Path AC", self.id, ":", path)
+        else:
+            raise Exception("No solution found for", self.id)
+        
+        #Check the path
+        if path[0][1] != t:
+            raise Exception("Something is wrong with the timing of the path planning")
 
     def move(self, dt, t):   
         """
@@ -101,32 +142,117 @@ class Taxibot(object):
                 
                 self.from_to = [new_from_id, new_next_id] #update new from and to node
 
+    
+    def Hold_position(self, t):
+        if self.idle == True:
+            self.goal = self.holding_location
+            #Set the path of the taxibot to its holding position for the next timestep
+            self.path_to_goal = [(self.holding_location, t+0.5), (self.holding_location, t+1), (self.holding_location, t+1.5)]
+            self.from_to = [self.holding_location, self.holding_location]
+        else:
+            raise Exception("Taxibot is not idle, cannot hold position")
 
-    def plan_independent(self, nodes_dict, edges_dict, heuristics, t):
+    def Follow_AC(self, t):
+        return
+    
+    def Taxi_to_holding(self, t):
+        self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
+        #once it has planned a route, set the status to taxxiing
+        self.planning_status == "taxiing"
+        return
+    
+    def Taxi_to_AC(self, t):
+        self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
+        self.planning_status == "taxiing"
+        return
+
+    def broadcast_next_nodes(self, horizon_length):
         """
-        Plans a path for taxiing aircraft assuming that it knows the entire layout.
-        Other traffic is not taken into account.
-        INPUT:
-            - nodes_dict: copy of the nodes_dict
-            - edges_dict: edges_dict with current edge weights
+        Find and broadcasts the next nodes when requested to the central location.
         """
-        
-        if self.status == "taxiing":
-            start_node = self.start #node from which planning should be done
-            goal_node = self.goal #node to which planning should be done
+        ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon_length]
+        if len(ac_nextsteps) == 1:
+            ac_nextsteps.append(None)
+            ac_nextsteps.append(None)
+        elif len(ac_nextsteps) == 2:
+            ac_nextsteps.append(None)
+
+        return ac_nextsteps
+
+    def conflict_detection(self, aircraft_lst, horizon, t, edges_dict,nodes_dict, heuristics):
+        """
+        Detects if there is a conflict between two aircraft.
+        """
+        #Define own next 3 steps and request the next 3 steps of all other aircrafts that are taxxiing
+        horizon_length = len(horizon)
+        dummynode = 1000
+        other_paths = {}
+        other_edges = {}
+        Aircrafts_checked = []
+        ac_nextsteps = self.broadcast_next_nodes(horizon)
+        ac_nextsteps_d = [step if step != None else dummynode for step in ac_nextsteps]
+        ac_nextsteps_d.append(dummynode)
+        ac_nextedges = [sorted((ac_nextsteps_d[tau], ac_nextsteps_d[tau+1])) for tau in range(horizon_length)]
+        for ac in aircraft_lst:
+            #only check aicraft with certain distance to own aircraft
+            position_ac = ac.position
+            position_self = self.position
+            distance = math.sqrt((position_ac[0]-position_self[0])**2 + (position_ac[1]-position_self[1])**2)
+            if distance < 3 and ac.status == "taxiing" and ac.id != self.id:            
+                other_nextsteps = ac.broadcast_next_nodes(horizon)
+                other_paths[ac] = other_nextsteps
+                other_nextsteps_d = [step if step != None else dummynode for step in other_nextsteps]
+                other_nextsteps_d.append(dummynode)
+                other_edges[ac] = [sorted((other_nextsteps_d[tau], other_nextsteps_d[tau+1])) for tau in range(horizon_length)]
+                # other_paths.append(other_nextsteps)
+                Aircrafts_checked.append(ac)
+                    
+        #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
+        # for i in range(len(Aircrafts_checked)):
+        #     for tau in range(timehorizon):
+        #         if ac_nextsteps[tau] is not None and ac_nextsteps[tau] == other_paths[i][tau]:
+        #             Conflicted_aircraft = Aircrafts_checked[i]
+        #             Conflicted_node = ac_nextsteps[tau]
+        #             conflict_time = horizon_length[tau]
+        #             print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at ", Conflicted_node,". Now starting conflict resolution.")
+        #             #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+
+        for ac in Aircrafts_checked:
+            for tau in range(horizon_length):
+                if ac_nextsteps[tau] != None and ac_nextsteps[tau] == other_paths[ac][tau]:
+                    Conflicted_aircraft = ac
+                    Conflicted_node = ac_nextsteps[tau]
+                    conflict_time = horizon[tau]
+                    print("______________Conflict detected between", self.id, "and", ac.id, " at node ", int(Conflicted_node),". Now starting conflict resolution.")
+                    self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, int(conflict_time), heuristics)
+
+                if dummynode not in ac_nextedges[tau] and ac_nextedges[tau] == other_edges[ac][tau]:
+                    Conflicted_aircraft = ac
+                    Conflicted_edge = ac_nextedges[tau]
+                    conflict_time = horizon[tau]
+                    print("______________Conflict detected between", self.id, "and", ac.id, " at node ", int(Conflicted_edge),". Now starting conflict resolution.")
+                    self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, int(conflict_time), heuristics)
+
+
+    def Conflict_resolution(self, conflicted_aircraft, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
+        """
+        Resolves the conflict between two aircrafts.
+        """
+        #find own priority level and that of the conflicted aircraft
+        self_priority = self.determine_prioritylevel(t, edges_dict)
+        conflicted_priority = conflicted_aircraft.determine_prioritylevel(t, edges_dict)
+        if self_priority > conflicted_priority:
+            print("______________Priority of", self.id, "is higher than", conflicted_aircraft.id, ". No action needed.")
             
-            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, t)
-            if success:
-                self.path_to_goal = path[1:]
-                next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
-                self.from_to = [path[0][0], next_node_id]
-                print("Path AC", self.id, ":", path)
-            else:
-                raise Exception("No solution found for", self.id)
+        if conflicted_priority > self_priority:
+            print("______________Priority of", self.id, "is lower than", conflicted_aircraft.id, ". Will replan.")
             
-            #Check the path
-            if path[0][1] != t:
-                raise Exception("Something is wrong with the timing of the path planning")
+            #Add constraint to the conflicted aircraft
+            self.constraints.append({'agent': self.id, 'node_id': [int(conflicted_node)], 'timestep': conflict_time, 'positive': False})
+            self.replan = True #Set to true to make sure the planning is based on current location
+            self.plan_independent(nodes_dict, edges_dict, heuristics, t)
+            return
+        return
             
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
