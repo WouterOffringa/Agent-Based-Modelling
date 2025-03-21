@@ -26,7 +26,7 @@ class Aircraft(object):
         self.nodes_dict = nodes_dict #keep copy of nodes dict
         
         #Route related
-        self.status = None 
+        self.status = "holding"
         self.path_to_goal = [] #planned path left from current location
         self.from_to = [0,0]
         self.constraints = []
@@ -241,14 +241,14 @@ class Aircraft(object):
         """
         #Initialize the list of the traveltimes from each taxibot to the aircraft
         traveltime_list = []
-        print("I'm in request function")
         for taxibot in taxibot_list:
             print("I'm in the for loop in the request function")
             if taxibot.status == "available":
                 #Calculate the distance between the taxibot and the aircraft
-                taxibot_pos = taxibot.position
-                aircraft_pos = self.position
-                
+                taxibot_pos = taxibot.from
+                print('taxibot position is', taxibot_pos)
+                print('Aircraft position is', aircraft_pos)
+                print("Available keys in h_values:", list(heuristics.keys()))
                 path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t) ### This path should be used by the taxibot to move to aircraft)
                 travel_time = path[-1][1] #The final timestep arrival time
                 traveltime_list.append(travel_time)

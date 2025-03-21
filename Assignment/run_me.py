@@ -247,7 +247,31 @@ while running:
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
             for ac in aircraft_lst:
                 print("I'm just before the request function")
+                #print(heuristics)
                 ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+                ## This function above should return the 'winning taxibot'
+
+                ## Goal node of winning tug is set to current position aircraft
+                # tug.goal_node = ac.start
+
+                ## Winning taxibot starts taxiing to ac, so idle is false en unavailable
+                #tug.idle == False
+                #tug.status == 'unavailable'
+
+                ##Now aircraft should still be holding and taxibot is now moving to ac
+
+                ##Taxibot arrives at aircraft (goal node)?
+
+                ## At time of arrival taxibot: aircraft plans it's own route and tug follows the ac
+                #tug.idle == True
+                # run ac planner? ac status set to taxiing
+
+                ##Ac now in control and is taxxing
+
+                ##Ac arrival goal node: Tug set back in control to plan it's route and be available (deconnect from aircraft)
+                #tug.idle == False
+                #tug.status == 'available'
+
 
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
