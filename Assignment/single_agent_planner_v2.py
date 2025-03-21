@@ -63,8 +63,9 @@ def build_constraint_table(constraints, agent):
 
     constraint_table = [[] for _ in range(max_timestep + 1)]
     for constraint in positive:
+        dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # positive vertex constraint
-            constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': True})
+            constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': True})
         else:  # positive edge constraint
             constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': True})
             constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': True})
@@ -73,8 +74,9 @@ def build_constraint_table(constraints, agent):
     # TODO: only negative vertex constraints works for now
 
     for constraint in negative:
+        dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # vertex constraint
-            constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False, 'timestep': constraint['timestep']})
+            constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': False, 'timestep': constraint['timestep']})
         elif constraint['positive']:  # positive edge constraint for other agents
             constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': False})
             constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': False})
@@ -82,7 +84,9 @@ def build_constraint_table(constraints, agent):
                 {'node_id': [constraint['node_id'][1], constraint['node_id'][0]], 'positive': False})
         else:  # negative edge constraint
             constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
+    
     return constraint_table
+
 
 
 def is_constrained(curr_node, next_node, next_time, constraint_table):

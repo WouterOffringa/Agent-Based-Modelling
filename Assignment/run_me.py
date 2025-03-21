@@ -203,30 +203,30 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    spawning_time = 2
-    if (t-1) % spawning_time == 0:
-        i = len(aircraft_lst) + 1
-        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
-        if ac_type == 'A':
-            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
-            aircraft_lst.append(ac)
-        else:
-            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
-            aircraft_lst.append(ac)
-        constraints = []
+    # spawning_time = 2
+    # if (t-1) % spawning_time == 0:
+    #     i = len(aircraft_lst) + 1
+    #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
+    #     if ac_type == 'A':
+    #         ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+    #         aircraft_lst.append(ac)
+    #     else:
+    #         ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+    #         aircraft_lst.append(ac)
+    #     constraints = []
 
     # ==== Fixed Spawning ====
-    # spawning_time = 20
-    # if (t-1) % spawning_time == 0:
+    spawning_time = 20
+    if (t-1) % spawning_time == 0:
         # case 1 - 4 aircraft which touch in the bottom right corner
-        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
-        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
-        # ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
-        # ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
-        # aircraft_lst.append(ac)
-        # aircraft_lst.append(ac1)
-        # aircraft_lst.append(ac2)
-        # aircraft_lst.append(ac3)
+        ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
+        ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
+        ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
+        ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
+        aircraft_lst.append(ac)
+        aircraft_lst.append(ac1)
+        aircraft_lst.append(ac2)
+        aircraft_lst.append(ac3)
         
         # case 2 - 4 aircraft which needs to cross diagonally
         # ac = Aircraft(1, 'A', 37,34,t, nodes_dict) 
@@ -249,7 +249,7 @@ while running:
             tug = Taxibot(i, location, location, nodes_dict)
             tug_lst.append(tug)
             tug.idle = True
-
+        constraints = []
         run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
         
     #Do planning 
