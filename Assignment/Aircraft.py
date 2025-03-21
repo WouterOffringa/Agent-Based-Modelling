@@ -218,6 +218,7 @@ class Aircraft(object):
         Resolves the conflict between two aircrafts.
         """
         #find own priority level and that of the conflicted aircraft
+        print("in conflict resultion of ", self.id)
         self_priority = self.determine_prioritylevel(t, edges_dict)
         conflicted_priority = conflicted_aircraft.determine_prioritylevel(t, edges_dict)
         if self_priority > conflicted_priority:

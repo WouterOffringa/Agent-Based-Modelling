@@ -247,17 +247,17 @@ while running:
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
             for ac in aircraft_lst:
                 print("I'm just before the request function")
-                ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+                #ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
 
-            run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+                run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
         #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:
             PriorityDetector(aircraft_lst, t, edges_dict, nodes_dict, heuristics)
         
         #Check the planning for the taxibots
-
-        run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+        if t % 0.5 == 0:
+            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
             
         
     elif planner == "Prioritized":
