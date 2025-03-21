@@ -58,7 +58,8 @@ def build_constraint_table(constraints, agent):
             max_timestep = max(max_timestep, constraint['timestep'])
         elif constraint['agent'] == agent:  # negative constraint is effective for only one agent
             negative.append(constraint)
-            max_timestep = max(max_timestep, constraint['timestep'])
+            # print(constraint['timestep'], "constraint['timestep']")
+            max_timestep = int(2*max(max_timestep, constraint['timestep']))
 
     constraint_table = [[] for _ in range(max_timestep + 1)]
     for constraint in positive:
@@ -81,18 +82,15 @@ def build_constraint_table(constraints, agent):
                 {'node_id': [constraint['node_id'][1], constraint['node_id'][0]], 'positive': False})
         else:  # negative edge constraint
             constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
-
     return constraint_table
 
 
 def is_constrained(curr_node, next_node, next_time, constraint_table):
 
-    # TODO: check where the indexing of constraint_table is wrong, the constraints are not properly avoided now
-
-    if len(constraint_table) <= next_time: 
+    if len(constraint_table) <= 2*next_time:
         return False
 
-    for constraint in constraint_table[int(next_time)]:
+    for constraint in constraint_table[int(2*next_time)]:
         if constraint['positive']:  # positive constraint
             if constraint['node_id'][0] != next_node:
                 return True
@@ -129,7 +127,7 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
         if curr['node_id'] == goal_node and curr['timestep'] > earliest_goal_timestep:
             found = True
             if curr['timestep'] + 1 < len(constraint_table):
-                for t in range(curr['timestep'] + 1, len(constraint_table)):
+                for t in range(int(curr['timestep']) + 1, len(constraint_table)):
                     if is_constrained(goal_node, goal_node, t, constraint_table):
                         found = False
                         earliest_goal_timestep = t + 1
@@ -139,7 +137,7 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
         # Substitution for move()
         child_nodes = nodedict[curr['node_id']]['neighbors'] | {curr['node_id']}
         for child_node in child_nodes: 
-            if is_constrained(curr['node_id'], child_node, curr['timestep'] + 1, constraint_table):
+            if is_constrained(curr['node_id'], child_node, curr['timestep'] + 0.5, constraint_table):
                 continue
             child = {'node_id': child_node,
                     'g_val': curr['g_val'] + 0.5,
