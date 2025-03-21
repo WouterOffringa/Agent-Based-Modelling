@@ -245,7 +245,7 @@ class Aircraft(object):
             print("I'm in the for loop in the request function")
             if taxibot.status == "available":
                 #Calculate the distance between the taxibot and the aircraft
-                taxibot_pos = taxibot.from
+                taxibot_pos = taxibot.from_to[0]
                 print('taxibot position is', taxibot_pos)
                 print('Aircraft position is', aircraft_pos)
                 print("Available keys in h_values:", list(heuristics.keys()))

@@ -247,8 +247,9 @@ while running:
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
             for ac in aircraft_lst:
                 print("I'm just before the request function")
+                run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
                 #print(heuristics)
-                ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+                #ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
                 ## This function above should return the 'winning taxibot'
 
                 ## Goal node of winning tug is set to current position aircraft
@@ -273,7 +274,7 @@ while running:
                 #tug.status == 'available'
 
 
-            run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+            
 
         #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:

@@ -24,6 +24,13 @@ class Taxibot(object):
         self.planning_status = None            #ensure we dont plan when we are taxxiing already
         self.idle = True                            #If idling, to keep aircraft on the map without a driving plan
 
+        #Route related
+                #Route related
+        self.status = "holding"
+        self.path_to_goal = [] #planned path left from current location
+        self.from_to = [0,0]
+        self.constraints = []
+
         #State related
         self.heading = 0
         self.goal_node = self.holding_location
@@ -141,6 +148,7 @@ class Taxibot(object):
             self.goal = self.holding_location
             #Set the path of the taxibot to its holding position for the next timestep
             self.path_to_goal = [(self.holding_location, t+0.5), (self.holding_location, t+1), (self.holding_location, t+1.5)]
+            self.from_to = [self.holding_location, self.holding_location]
         else:
             raise Exception("Taxibot is not idle, cannot hold position")
 
