@@ -35,6 +35,7 @@ class Taxibot(object):
         self.heading = 0
         self.goal_node = self.holding_location
         self.position = self.nodes_dict[self.start]["xy_pos"]
+        self.goal = self.goal_node
         self.delay = 0 #TODO: Create delay logic
 
     def get_heading(self, xy_start, xy_next):
@@ -143,7 +144,7 @@ class Taxibot(object):
                 self.from_to = [new_from_id, new_next_id] #update new from and to node
 
     
-    def Hold_position(self, t):
+    def Hold_position(self, t, heuristics):
         if self.idle == True:
             self.goal = self.holding_location
             #Set the path of the taxibot to its holding position for the next timestep
@@ -152,17 +153,17 @@ class Taxibot(object):
         else:
             raise Exception("Taxibot is not idle, cannot hold position")
 
-    def Follow_AC(self, t):
+    def Follow_AC(self, t, heuristics):
         return
     
-    def Taxi_to_holding(self, t):
-        self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
+    def Taxi_to_holding(self, t, heuristics):
+        self.plan_independent(self.nodes_dict, heuristics, t)
         #once it has planned a route, set the status to taxxiing
         self.planning_status == "taxiing"
         return
     
-    def Taxi_to_AC(self, t):
-        self.plan_independent(self.nodes_dict, self.edges_dict, self.heuristics, t)
+    def Taxi_to_AC(self, t, heuristics):
+        self.plan_independent(self.nodes_dict, self.edges_dict, heuristics, t)
         self.planning_status == "taxiing"
         return
 

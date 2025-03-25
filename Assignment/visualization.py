@@ -24,6 +24,7 @@ disp_vehicles = True
 piclist = []  # list to store all pics
 piclist_tug = [] # list to store all tug pics
 rectlist = []  # list to store the rectangular areas of the surface
+rectlist_tug = []
 squared_display = True  # create squared display
 boundary_margin = 0.01  # add boundary margin to be sure that points are within boundary
 screen_percentage = 0.94  # percentage of pixels used in the critical axis
@@ -61,9 +62,9 @@ def plot_aircraft(scr, reso, deg, x, y, x0, y0, x_range, y_range, x_shift=0, y_s
 def plot_tug(scr, reso, deg, x, y, x0, y0, x_range, y_range, x_shift=0, y_shift=0):
     plane_map_x = c2m_x(x, x0, reso[0], x_range, x_shift)  # convert x-coordinates to map coordinates
     plane_map_y = c2m_y(y, y0, reso[1], y_range, y_shift)  # convert y-coordinates to map coordinates
-    rectlist[deg].centerx = plane_map_x  # set x-location of the tug image
-    rectlist[deg].centery = plane_map_y  # set y-location of the tug image
-    scr.blit(piclist_tug[deg], rectlist[deg])  # blit the aircraft image to the screen
+    rectlist_tug[deg].centerx = plane_map_x  # set x-location of the tug image
+    rectlist_tug[deg].centery = plane_map_y  # set y-location of the tug image
+    scr.blit(piclist_tug[deg], rectlist_tug[deg])  # blit the aircraft image to the screen
 
 def plot_line(scr, color_code, reso, radius, coord_1, coord_2, x0, y0, x_range, y_range, x_shift=0, y_shift=0):
     wp_map_x_1 = c2m_x(coord_1[0], x0, reso[0], x_range, x_shift)  # get x-pixel of source
@@ -121,6 +122,8 @@ def map_initialization(nodes_dict, edges_dict):  # function to initialise mapf
     for i in range(0, 360):  # transform aircraft image in every possible direction
         piclist.append(pg.transform.rotozoom(plane_pic, i, (1. / 14.)))  # 1/14 is used for scaling the aircraft image
         rectlist.append(piclist[i].get_rect())  # get rectangular surface of the pic
+        piclist_tug.append(pg.transform.rotozoom(tug_pic, i, (1./14)))
+        rectlist_tug.append(piclist_tug[i].get_rect())
 
     map_properties['outer_reso'] = outer_reso  # store created information (resolution)
     map_properties['inner_reso'] = inner_reso  # resolution airport layout
