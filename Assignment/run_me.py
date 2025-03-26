@@ -193,11 +193,11 @@ while running:
                                          "xy_pos": ac.position,
                                          "heading": ac.heading}
         for tug in tug_lst:
-            if tug.status == "taxiing":
-                current_states[tug.id] = {"type": "tug",
-                                         "ac_id": tug.id,
-                                         "xy_pos": tug.position,
-                                         "heading": tug.heading}
+            # if tug.status == "taxiing":
+            current_states[tug.id] = {"type": "tug",
+                                        "ac_id": tug.id,
+                                        "xy_pos": tug.position,
+                                        "heading": tug.heading}
         escape_pressed = map_running(map_properties, current_states, t)
         timer.sleep(visualization_speed) 
       
@@ -244,9 +244,10 @@ while running:
     
     # ==== Spawning the taxibots ====
     spawning_locations = [7, 9, 16, 23, 107]
+    alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
-            tug = Taxibot(i, location, location, nodes_dict)
+            tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
             tug_lst.append(tug)
             tug.idle = True
         constraints = []
@@ -308,6 +309,10 @@ while running:
     for ac in aircraft_lst: 
         if ac.status == "taxiing": 
             ac.move(dt, t)
+    
+    for tug in tug_lst:
+        if tug.status == "available": #TODO Set to new states
+            tug.move(dt,t)
                            
     t = t + dt
           
