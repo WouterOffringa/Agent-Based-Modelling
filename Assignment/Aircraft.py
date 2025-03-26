@@ -1,5 +1,6 @@
 from single_agent_planner_v2 import simple_single_agent_astar
 import math
+import numpy as np
 
 class Aircraft(object):
     """Aircraft class, should be used in the creation of new aircraft."""
@@ -254,17 +255,24 @@ class Aircraft(object):
         traveltime_list = []
         for taxibot in taxibot_list:
             print("I'm in the for loop in the request function")
-            if taxibot.status == "available":
+            if taxibot.status == "holding" or taxibot.status == "taxiing, available":
                 #Calculate the distance between the taxibot and the aircraft
                 taxibot_pos = taxibot.from_to[0]
+                aircraft_pos = self.start
                 print('taxibot position is', taxibot_pos)
                 print('Aircraft position is', aircraft_pos)
                 print("Available keys in h_values:", list(heuristics.keys()))
-                path = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t) ### This path should be used by the taxibot to move to aircraft)
-                travel_time = path[-1][1] #The final timestep arrival time
+                succes, route_to_ac = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t) ### This path should be used by the taxibot to move to aircraft)
+                print(route_to_ac)
+                travel_time = route_to_ac[-1][1] #The final timestep arrival time
                 traveltime_list.append(travel_time)
             else:
                 traveltime_list.append(10000)
+        print(traveltime_list)
+        traveltime_list = np.array(traveltime_list)
+        winning_tug = taxibot_list[np.argmin(traveltime_list)]
+        winning_tug.status = "called by aircraft"
+        
             #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
