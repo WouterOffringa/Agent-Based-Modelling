@@ -7,14 +7,16 @@ It will call the priority function of the agents, compare them return a replanni
 """
 
 import Aircraft
+import Taxibot
 from independent import run_independent_planner
 
 
-def PriorityDetector(aircraft_lst, t, edges_dict, nodes_dict, heuristics):
+def PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics):
     horizon_length = [t+0.5, t+1., t+1.5] #These timesteps will be checked for possible collision
-    for ac in aircraft_lst:
-        if ac.status == "taxiing":
-            ac.conflict_detection(aircraft_lst, horizon_length, t, edges_dict,nodes_dict, heuristics)
+    for agent in agent_lst:
+        if agent.status == "taxiing" or agent.status == "taxiing, available" or agent.status == "taxiing, unavailable":
+            print("Checking for conflicts for agent", agent.id)
+            agent.conflict_detection(agent_lst, horizon_length, t, edges_dict,nodes_dict, heuristics)
             
                 
 

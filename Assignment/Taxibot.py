@@ -171,14 +171,14 @@ class Taxibot(object):
         """
         Find and broadcasts the next nodes when requested to the central location.
         """
-        ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon_length]
-        if len(ac_nextsteps) == 1:
-            ac_nextsteps.append(None)
-            ac_nextsteps.append(None)
-        elif len(ac_nextsteps) == 2:
-            ac_nextsteps.append(None)
+        agent_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon_length]
+        if len(agent_nextsteps) == 1:
+            agent_nextsteps.append(None)
+            agent_nextsteps.append(None)
+        elif len(agent_nextsteps) == 2:
+            agent_nextsteps.append(None)
 
-        return ac_nextsteps
+        return agent_nextsteps
 
     def conflict_detection(self, aircraft_lst, horizon, t, edges_dict,nodes_dict, heuristics):
         """
