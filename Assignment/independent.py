@@ -25,7 +25,6 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
         if tug.status == "called by aircraft":
             tug.Taxi_to_AC(t,heuristics)
             print("Tug", tug.id, "is taxiing to an aircraft, its next states are:", tug.path_to_goal)
-            tug.status = "taxiing, unavailable"
         if tug.status == "following":
             tug.Follow_AC(t,heuristics)
             print("Tug", tug.id, "is following an aircraft, its next states are:", tug.path_to_goal)
@@ -33,6 +32,5 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
         if tug.status == "planning, available":
             tug.Taxi_to_holding(t,heuristics)
             print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
-            tug.status = "taxiing, available"
 
         
