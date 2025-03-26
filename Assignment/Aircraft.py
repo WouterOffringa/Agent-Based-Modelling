@@ -211,14 +211,14 @@ class Aircraft(object):
                     Conflicted_node = own_nextsteps[tau]
                     conflict_time = horizon[tau]
                     print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
-                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
+                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics)
 
                 if dummynode not in own_nextedges[tau] and own_nextedges[tau] == other_edges[agent][tau]:
                     Conflicted_agent = agent
                     Conflicted_edge = own_nextedges[tau]
                     conflict_time = horizon[tau]
                     print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
-                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, int(Conflicted_edge[1]), conflict_time, heuristics)
+                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics)
 
 
 
@@ -241,7 +241,6 @@ class Aircraft(object):
             print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
             
             #Add constraint to the conflicted aircraft
-            #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
                 for node in set(conflicted_node) & set(nodes_dict[conflicted_node[0]]['neighbors']) & set(nodes_dict[conflicted_node[0]]['neighbors']):
                     for tconfl in [conflict_time, conflict_time+.5, conflict_time+1.]:
@@ -263,14 +262,12 @@ class Aircraft(object):
         #Initialize the list of the traveltimes from each taxibot to the arrived
         traveltime_list = []
         for taxibot in taxibot_list:
-            print("I'm in the for loop in the request function")
+
             if taxibot.status == "holding" or taxibot.status == "taxiing, available":
                 #Calculate the distance between the taxibot and the aircraft
                 taxibot_pos = taxibot.from_to[0]
                 aircraft_pos = self.start
-                print('taxibot position is', taxibot_pos)
-                print('Aircraft position is', aircraft_pos)
-                print("Available keys in h_values:", list(heuristics.keys()))
+
                 succes, route_to_ac = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t) ### This path should be used by the taxibot to move to aircraft)
                 print(route_to_ac)
                 travel_time = route_to_ac[-1][1] #The final timestep arrival time
