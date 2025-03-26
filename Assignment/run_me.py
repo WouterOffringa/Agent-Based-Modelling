@@ -175,7 +175,6 @@ print("\nSimulation Started\n")
 while running:
 
     t= round(t,2)    
-    print("\nTime:", t)
     #Check conditions for termination
     if t >= time_end or escape_pressed: 
         running = False
@@ -229,11 +228,11 @@ while running:
         # aircraft_lst.append(ac3)
         
         # case 2 - 4 aircraft which needs to cross diagonally
-        ac = Aircraft(1, 'A', 37,34,t, nodes_dict) 
+        ac = Aircraft(1, 'A', 37,34,t, nodes_dict)
         ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
         aircraft_lst.append(ac)
         aircraft_lst.append(ac1)
-        ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict) 
+        ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict)
         ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
         aircraft_lst.append(ac2)
         aircraft_lst.append(ac3)
@@ -316,8 +315,6 @@ while running:
     
     for tug in tug_lst:
         if tug.status != "holding" and tug.status != "following" and tug.status != "arrived": #TODO Set to new states
-            print(tug.status)
-            print("in the loop at", t)
             tug.move(dt, t)
                            
     t = t + dt

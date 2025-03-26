@@ -29,8 +29,12 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
             tug.Follow_AC(t,heuristics)
             print("Tug", tug.id, "is following an aircraft, its next states are:", tug.path_to_goal)
         #Once a tug is available again and not idling, it will plan to its holding location.
+        if tug.Goal_AC is not None and tug.Goal_AC.status == "arrived":
+            tug.status = "planning, available"
+            print("I;m available!!!", tug.holding_location)
         if tug.status == "planning, available":
             tug.Taxi_to_holding(t,heuristics)
             print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
-
+            tug.status = "taxiing, available"
+            tug.Goal_AC = None
         
