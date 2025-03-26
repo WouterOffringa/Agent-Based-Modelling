@@ -28,7 +28,7 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
             #print("Tug", tug.id, "is holding position, its next states are:", tug.path_to_goal)
             #Once the tug is unavailable and idling, it mean it is following the position of an aicraft
         if tug.status == "called by aircraft":
-            tug.Taxi_to_AC(t,heuristics)
+            tug.Taxi_to_AC(t, edges_dict, heuristics)
             print("Tug", tug.id, "is taxiing to an aircraft") #, its next states are:", tug.path_to_goal)
             tug.status = "taxiing, unavailable"
         if tug.status == "following":
@@ -37,11 +37,11 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
         #Once a tug is available again and not idling, it will plan to its holding location.
         if tug.Goal_AC is not None and tug.Goal_AC.status == "arrived":
             tug.status = "planning, available"
-            print("I;m available!!!", tug.holding_location)
+
         if tug.status == "planning, available":
-            tug.Taxi_to_holding(t,heuristics)
+            tug.Taxi_to_holding(t, edges_dict, heuristics)
             # print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
             tug.status = "taxiing, available"
-            tug.Goal_AC.status = "holding"
+            tug.Goal_AC.status = "arrived"
             tug.Goal_AC = None
         

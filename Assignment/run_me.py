@@ -150,6 +150,7 @@ heuristics = calc_heuristics(graph, nodes_dict)
 
 aircraft_lst = []   #List which can contain aircraft agents
 tug_lst = []    #List which can contain tug agents  
+agent_lst = []  #List which can contain all agents
 
 if visualization:
     map_properties = map_initialization(nodes_dict, edges_dict) #visualization properties
@@ -186,7 +187,7 @@ while running:
     if visualization:
         current_states = {} #Collect current states of all aircraft
         for ac in aircraft_lst:
-            if ac.status == "taxiing":
+            if ac.status == "taxiing" or ac.status == "holding":
                 current_states[ac.id] = {"type": "aircraft",
                                         "ac_id": ac.id,
                                          "xy_pos": ac.position,
@@ -202,45 +203,66 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    # spawning_time = 2
+    # spawning_time = 6
     # if (t-1) % spawning_time == 0:
     #     i = len(aircraft_lst) + 1
     #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
     #     if ac_type == 'A':
     #         ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+    #         ac.status = "holding"
     #         aircraft_lst.append(ac)
+    #         agent_lst.append(ac)
     #     else:
     #         ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+    #         ac.status = "holding"
     #         aircraft_lst.append(ac)
-    #     constraints = []
+    #         agent_lst.append(ac)
+
 
     # ==== Fixed Spawning ====
     spawning_time = 25
     if (t-1) % spawning_time == 0:
-        # case 1 - 4 aircraft which touch in the bottom right corner
-        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
-        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
-        # ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
-        # ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
-        # aircraft_lst.append(ac)
-        # aircraft_lst.append(ac1)
-        # aircraft_lst.append(ac2)
-        # aircraft_lst.append(ac3)
+    #     #case 1 - 4 aircraft which touch in the bottom right corner
+    #     ac = Aircraft(1, 'A', 37,36,t, nodes_dict)
+    #     ac.status = "holding"
+    #     ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
+    #     ac1.status = "holding"
+    #     ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict)
+    #     ac2.status = "holding"
+    #     ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
+    #     ac3.status = "holding"
+    #     aircraft_lst.append(ac)
+    #     agent_lst.append(ac)
+    #     aircraft_lst.append(ac1)
+    #     agent_lst.append(ac1)
+    #     aircraft_lst.append(ac2)
+    #     agent_lst.append(ac2)
+    #     aircraft_lst.append(ac3)
+    #     agent_lst.append(ac3)
         
         # case 2 - 4 aircraft which needs to cross diagonally
         ac = Aircraft(1, 'A', 37,34,t, nodes_dict)
+        ac.status = "holding"
         ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
+        ac1.status = "holding"
         aircraft_lst.append(ac)
+        agent_lst.append(ac)
         aircraft_lst.append(ac1)
+        agent_lst.append(ac1)
         ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict)
+        ac2.status = "holding"
         ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
+        ac3.status = "holding"
         aircraft_lst.append(ac2)
+        agent_lst.append(ac2)
         aircraft_lst.append(ac3)
+        agent_lst.append(ac3)
 
 
-        constraints = []
-    if t == 25:
-        aircraft_lst.clear()
+
+    #     constraints = []
+    # if t == 25:
+    #     aircraft_lst.clear()
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
@@ -250,17 +272,20 @@ while running:
         for i, location in enumerate(spawning_locations, start=1):
             tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
             tug_lst.append(tug)
+            agent_lst.append(tug)
             tug.idle = True
         constraints = []
         run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-        
+
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
             for ac in aircraft_lst:
 
                 # run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-                ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+                if ac.status == "holding":
+                    ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+
         if t % 0.5 == 0:
             run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
@@ -271,7 +296,7 @@ while running:
 
         #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:
-            PriorityDetector(aircraft_lst, t, edges_dict, nodes_dict, heuristics)
+            PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
 
 
         #Check the planning for the taxibots
