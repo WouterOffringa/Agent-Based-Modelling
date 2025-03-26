@@ -27,7 +27,7 @@ nodes_file = "nodes.xlsx" #xlsx file with for each node: id, x_pos, y_pos, type
 edges_file = "edges.xlsx" #xlsx file with for each edge: from  (node), to (node), length
 
 #Parameters that can be changed:
-simulation_time = 30
+simulation_time = 50
 planner = "Independent" #choose which planner to use (currently only Independent is implemented)
 
 #Visualization (can also be changed)
@@ -216,7 +216,7 @@ while running:
     #     constraints = []
 
     # ==== Fixed Spawning ====
-    spawning_time = 20
+    spawning_time = 25
     if (t-1) % spawning_time == 0:
         # case 1 - 4 aircraft which touch in the bottom right corner
         # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
@@ -245,10 +245,12 @@ while running:
 
 
         constraints = []
-        
+    if t == 25:
+        aircraft_lst.clear()
+        # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16, 23, 107]
+    spawning_locations = [7, 9, 16] #, 23, 107]
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
@@ -263,33 +265,10 @@ while running:
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
             for ac in aircraft_lst:
-                print("I'm just before the request function")
 
                 # run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-
                 ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
-                ## This function above should return the 'winning taxibot'
 
-                ## Goal node of winning tug is set to current position aircraft
-                # tug.goal_node = ac.start
-
-                ## Winning taxibot starts taxiing to ac, so idle is false en unavailable
-                #tug.idle == False
-                #tug.status == 'unavailable'
-
-                ##Now aircraft should still be holding and taxibot is now moving to ac
-
-                ##Taxibot arrives at aircraft (goal node)?
-
-                ## At time of arrival taxibot: aircraft plans it's own route and tug follows the ac
-                #tug.idle == True
-                # run ac planner? ac status set to taxiing
-
-                ##Ac now in control and is taxxing
-
-                ##Ac arrival goal node: Tug set back in control to plan it's route and be available (deconnect from aircraft)
-                #tug.idle == False
-                #tug.status == 'available'
         if t % 0.5 == 0:
             run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
@@ -304,7 +283,6 @@ while running:
 
 
         #Check the planning for the taxibots
-
 
         
     elif planner == "Prioritized":
@@ -321,7 +299,8 @@ while running:
             ac.move(dt, t)
     
     for tug in tug_lst:
-        if tug.status == "taxiing, unavailable" or tug.status == "taxiing, available":
+        # if tug.status != "holding" and tug.status != "following" and tug.status != "arrived": #TODO Set to new states
+        if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
             tug.move(dt, t)
                            
     t = t + dt
