@@ -219,27 +219,27 @@ while running:
     spawning_time = 20
     if (t-1) % spawning_time == 0:
         # case 1 - 4 aircraft which touch in the bottom right corner
-        ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
-        ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
-        ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
-        ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
-        aircraft_lst.append(ac)
-        aircraft_lst.append(ac1)
-        aircraft_lst.append(ac2)
-        aircraft_lst.append(ac3)
-        
-        # case 2 - 4 aircraft which needs to cross diagonally
-        # ac = Aircraft(1, 'A', 37,34,t, nodes_dict) 
-        # ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
+        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
+        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
+        # ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
+        # ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
         # aircraft_lst.append(ac)
         # aircraft_lst.append(ac1)
-        # ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict) 
-        # ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
         # aircraft_lst.append(ac2)
         # aircraft_lst.append(ac3)
+        
+        # case 2 - 4 aircraft which needs to cross diagonally
+        ac = Aircraft(1, 'A', 37,34,t, nodes_dict) 
+        ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
+        aircraft_lst.append(ac)
+        aircraft_lst.append(ac1)
+        ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict) 
+        ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
+        aircraft_lst.append(ac2)
+        aircraft_lst.append(ac3)
 
 
-        # constraints = []
+        constraints = []
         
     
     # ==== Spawning the taxibots ====

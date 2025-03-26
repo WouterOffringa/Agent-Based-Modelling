@@ -12,16 +12,22 @@ def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t,
             
 def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t, constraints=[]):
     for tug in tugs_lst:
-        if tug.idle == True and tug.status == "available":
-            tug.Hold_position(t,heuristics)
-            print("Tug", tug.id, "is holding position, its next states are:", tug.path_to_goal)
-        if tug.idle == True and tug.status == "unavailable":
-            tug.Follow_AC(t,heuristics)
-            print("Tug", tug.id, "is following an aircraft, its next states are:", tug.path_to_goal)
-        if tug.idle == False and tug.status == "available":
-            tug.Taxi_to_holding(t,heuristics)
-            print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
-        if tug.idle == False and tug.status == "unavailable":
-            tug.Taxi_to_AC(t,heuristics)
+        #Once the tug is available and idling, it will hold its holding position
+        if tug.status == "holding":
+            tug.Hold_position(t)
+            #print("Tug", tug.id, "is holding position, its next states are:", tug.path_to_goal)
+            #Once the tug is unavailable and idling, it mean it is following the position of an aicraft
+        if tug.status == "called by aircraft":
+            tug.Taxi_to_AC(t)
             print("Tug", tug.id, "is taxiing to an aircraft, its next states are:", tug.path_to_goal)
+            tug.status = "unavailable taxiing"
+        if tug.status == "following":
+            tug.Follow_AC(t)
+            print("Tug", tug.id, "is following an aircraft, its next states are:", tug.path_to_goal)
+        #Once a tug is available again and not idling, it will plan to its holding location.
+        if tug.status == "planning, available":
+            tug.Taxi_to_holding(t)
+            print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
+            tug.status = "taxiing, available"
+
         

@@ -76,16 +76,8 @@ class Taxibot(object):
             - nodes_dict: copy of the nodes_dict
             - edges_dict: edges_dict with current edge weights
         """
-        if self.status == "available" and self.idle == False:
-            start_node = self.from_to[0] #node from which planning should be done
-            goal_node = self.holding_location #node to which planning should be done
-        if self.status == "unavailable" and self.idle == False:
-            start_node = self.from_to[0] #node from which planning should be done
-            goal_node = self.goal_node #Should be the node of the AC it is going to go to
 
-        success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
-
-        success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+        success, path = simple_single_agent_astar(nodes_dict, self.start_node, self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
 
         #Make sure the path is broadcasted to some central location
 
@@ -145,18 +137,17 @@ class Taxibot(object):
 
     
     def Hold_position(self, t, heuristics):
-        if self.idle == True:
-            self.goal = self.holding_location
-            #Set the path of the taxibot to its holding position for the next timestep
-            self.path_to_goal = [(self.holding_location, t+0.5), (self.holding_location, t+1), (self.holding_location, t+1.5)]
-            self.from_to = [self.holding_location, self.holding_location]
-        else:
-            raise Exception("Taxibot is not idle, cannot hold position")
+        self.goal = self.holding_location
+        #Set the path of the taxibot to its holding position for the next timestep
+        self.path_to_goal = [(self.holding_location, t+0.5), (self.holding_location, t+1), (self.holding_location, t+1.5)]
+        self.from_to = [self.holding_location, self.holding_location]
 
     def Follow_AC(self, t, heuristics):
         return
     
     def Taxi_to_holding(self, t, heuristics):
+        self.goal_node = self.holding_location
+        self.start_node = self.from_to[0]
         self.plan_independent(self.nodes_dict, heuristics, t)
         #once it has planned a route, set the status to taxxiing
         self.planning_status == "taxiing"
