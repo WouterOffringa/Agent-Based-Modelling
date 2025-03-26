@@ -254,21 +254,22 @@ class Aircraft(object):
         #Initialize the list of the traveltimes from each taxibot to the 
         traveltime_list = []
         for taxibot in taxibot_list:
-            print("I'm in the for loop in the request function")
+            # print("I'm in the for loop in the request function")
             if taxibot.status == "holding" or taxibot.status == "taxiing, available":
                 #Calculate the distance between the taxibot and the aircraft
                 taxibot_pos = taxibot.from_to[0]
                 aircraft_pos = self.start
-                print('taxibot position is', taxibot_pos)
-                print('Aircraft position is', aircraft_pos)
-                print("Available keys in h_values:", list(heuristics.keys()))
+                # print('taxibot position is', taxibot_pos)
+                # print('Aircraft position is', aircraft_pos)
+                # print("Available keys in h_values:", list(heuristics.keys()))
                 succes, route_to_ac = simple_single_agent_astar(nodes_dict, taxibot_pos, aircraft_pos, heuristics, t) ### This path should be used by the taxibot to move to aircraft)
-                print(route_to_ac)
+                # print(route_to_ac)
                 travel_time = route_to_ac[-1][1] #The final timestep arrival time
                 traveltime_list.append(travel_time)
             else:
                 traveltime_list.append(10000)
-        print(traveltime_list)
+                
+        # print(traveltime_list)
         traveltime_list = np.array(traveltime_list)
         winning_tug = taxibot_list[np.argmin(traveltime_list)]
         winning_tug.status = "called by aircraft"

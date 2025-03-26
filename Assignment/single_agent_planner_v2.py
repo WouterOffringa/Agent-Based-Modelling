@@ -116,7 +116,7 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
     open_list = []
     closed_list = dict()
     earliest_goal_timestep = current_time
-    print(start_node)
+    # print(start_node)
     h_value = h_values[start_node][start_node]
     root = {'node_id': start_node,
             'g_val': 0,

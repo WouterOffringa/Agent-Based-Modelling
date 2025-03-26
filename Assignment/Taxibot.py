@@ -79,7 +79,6 @@ class Taxibot(object):
         """
 
         success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
-        print('last node in path is', path[-1][0])
         #Make sure the path is broadcasted to some central location
 
         if success:
@@ -153,7 +152,7 @@ class Taxibot(object):
         return
     
     def Taxi_to_holding(self, t, heuristics):
-        print("Im going home")
+        # print("Im going home")
         self.goal_node = self.holding_location
         # self.start = self.from_to[0]
         self.from_to[0] = self.Goal_AC.goal
