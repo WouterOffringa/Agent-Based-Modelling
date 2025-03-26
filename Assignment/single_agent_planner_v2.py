@@ -88,6 +88,17 @@ def build_constraint_table(constraints, agent):
     return constraint_table
 
 
+def last_node(curr_node,Reversing_Possible=False):
+    eval = curr_node
+    if Reversing_Possible:
+        return set()
+    if eval['parent'] == None:
+        return set()
+    elif eval['parent']['node_id'] == eval['node_id']:
+        return last_node(eval['parent'])
+    else:
+        return {eval['parent']['node_id']}
+
 
 def is_constrained(curr_node, next_node, next_time, constraint_table):
 
@@ -139,7 +150,8 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
             if found:
                 return True, get_path(curr)
         # Substitution for move()
-        child_nodes = nodedict[curr['node_id']]['neighbors'] | {curr['node_id']}
+        child_nodes = nodedict[curr['node_id']]['neighbors'] | {curr['node_id']} 
+        child_nodes -= last_node(curr)
         for child_node in child_nodes: 
             if is_constrained(curr['node_id'], child_node, curr['timestep'] + 0.5, constraint_table):
                 continue
