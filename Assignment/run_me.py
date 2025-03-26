@@ -150,6 +150,7 @@ heuristics = calc_heuristics(graph, nodes_dict)
 
 aircraft_lst = []   #List which can contain aircraft agents
 tug_lst = []    #List which can contain tug agents  
+agent_lst = []  #List which can contain all agents
 
 if visualization:
     map_properties = map_initialization(nodes_dict, edges_dict) #visualization properties
@@ -231,11 +232,16 @@ while running:
         ac = Aircraft(1, 'A', 37,34,t, nodes_dict)
         ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
         aircraft_lst.append(ac)
+        agent_lst.append(ac)
         aircraft_lst.append(ac1)
+        agent_lst.append(ac1)
         ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict)
         ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
         aircraft_lst.append(ac2)
+        agent_lst.append(ac2)
         aircraft_lst.append(ac3)
+        agent_lst.append(ac3)
+        
 
 
         constraints = []
@@ -248,10 +254,11 @@ while running:
         for i, location in enumerate(spawning_locations, start=1):
             tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
             tug_lst.append(tug)
+            agent_lst.append(tug)
             tug.idle = True
         constraints = []
         run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-        
+    
     #Do planning 
     if planner == "Independent":     
         if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
@@ -293,7 +300,7 @@ while running:
 
         #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:
-            PriorityDetector(aircraft_lst, t, edges_dict, nodes_dict, heuristics)
+            PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
 
 
         #Check the planning for the taxibots
@@ -314,7 +321,7 @@ while running:
             ac.move(dt, t)
     
     for tug in tug_lst:
-        if tug.status != "holding" and tug.status != "following" and tug.status != "arrived": #TODO Set to new states
+        if tug.status == "taxiing, unavailable" or tug.status == "taxiing, available":
             tug.move(dt, t)
                            
     t = t + dt
