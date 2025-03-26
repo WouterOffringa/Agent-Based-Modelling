@@ -28,7 +28,7 @@ class Taxibot(object):
                 #Route related
         self.status = "holding"
         self.path_to_goal = [] #planned path left from current location
-        self.from_to = [0,0]
+        self.from_to = [spawn_node, holding_location]
         self.constraints = []
 
         #State related
@@ -119,8 +119,12 @@ class Taxibot(object):
         #Update position with rounded values
         x = xy_to[0]-xy_from[0]
         y = xy_to[1]-xy_from[1]
-        x_normalized = x / math.sqrt(x**2+y**2)
-        y_normalized = y / math.sqrt(x**2+y**2)
+        if abs(x) > 1E-5 and abs(y) > 1E-5:
+            x_normalized = x / math.sqrt(x**2+y**2)
+            y_normalized = y / math.sqrt(x**2+y**2)
+        else:
+            x_normalized = 0.
+            y_normalized = 0.
         posx = round(self.position[0] + x_normalized * distance_to_move ,2) #round to prevent errors
         posy = round(self.position[1] + y_normalized * distance_to_move ,2) #round to prevent errors
         self.position = (posx, posy)  
