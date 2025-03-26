@@ -79,7 +79,7 @@ class Taxibot(object):
         """
 
         success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
-
+        print('last node in path is', path[-1][0])
         #Make sure the path is broadcasted to some central location
 
         if success:
@@ -110,10 +110,15 @@ class Taxibot(object):
         distance_to_move = self.speed*dt #distance to move in this timestep
   
         #Update position with rounded values
-        x = xy_to[0]-xy_from[0]
-        y = xy_to[1]-xy_from[1]
-        x_normalized = x / math.sqrt(x**2+y**2)
-        y_normalized = y / math.sqrt(x**2+y**2)
+        x = xy_to[0] - xy_from[0]
+        y = xy_to[1] - xy_from[1]
+        norm = math.sqrt(x**2 + y**2)
+        if norm != 0:
+            x_normalized = x / norm
+            y_normalized = y / norm
+        else:
+            x_normalized = 0
+            y_normalized = 0
         posx = round(self.position[0] + x_normalized * distance_to_move ,2) #round to prevent errors
         posy = round(self.position[1] + y_normalized * distance_to_move ,2) #round to prevent errors
         self.position = (posx, posy)  
@@ -144,11 +149,14 @@ class Taxibot(object):
         self.from_to = [self.holding_location, self.holding_location]
 
     def Follow_AC(self, t, heuristics):
+        self.position = self.Goal_AC.position
         return
     
     def Taxi_to_holding(self, t, heuristics):
+        print("Im going home")
         self.goal_node = self.holding_location
-        self.start_node = self.from_to[0]
+        # self.start = self.from_to[0]
+        self.from_to[0] = self.Goal_AC.goal
         self.plan_independent(self.nodes_dict, heuristics, t)
         #once it has planned a route, set the status to taxxiing
         self.status = "taxiing, available"
