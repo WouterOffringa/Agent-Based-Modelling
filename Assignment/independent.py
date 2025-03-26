@@ -42,6 +42,6 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
             tug.Taxi_to_holding(t, edges_dict, heuristics)
             # print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
             tug.status = "taxiing, available"
-            tug.Goal_AC.status = "arrived" # TODO I havent used this anywhere, can be replaced by any string
+            tug.Goal_AC.status = "arrived"
             tug.Goal_AC = None
         

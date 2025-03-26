@@ -28,14 +28,14 @@ class Aircraft(object):
         self.nodes_dict = nodes_dict #keep copy of nodes dict
         
         #Route related
-        self.status = "holding"
+        self.status = None
         self.path_to_goal = [] #planned path left from current location
         self.from_to = [0,0]
         self.constraints = []
 
         #State related
         self.heading = 0
-        self.position = (0,0) #xy position on map
+        self.position = nodes_dict[self.start]["xy_pos"] #xy position on map
         self.delay = 0
 
         #Replanning related
