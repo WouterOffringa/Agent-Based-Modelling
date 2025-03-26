@@ -244,7 +244,7 @@ while running:
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16] #, 23, 107]
+    spawning_locations = [7, 9, 16, 23, 107]
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
@@ -261,7 +261,6 @@ while running:
 
                 # run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
                 ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
-
         if t % 0.5 == 0:
             run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 

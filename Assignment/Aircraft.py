@@ -280,6 +280,7 @@ class Aircraft(object):
             else:
                 traveltime_list.append(10000)
                 
+                
         # print(traveltime_list)
         traveltime_list = np.array(traveltime_list)
         winning_tug = taxibot_list[np.argmin(traveltime_list)]
