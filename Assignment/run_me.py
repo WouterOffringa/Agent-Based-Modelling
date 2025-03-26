@@ -175,7 +175,7 @@ print("\nSimulation Started\n")
 while running:
 
     t= round(t,2)    
-       
+    print("\nTime:", t)
     #Check conditions for termination
     if t >= time_end or escape_pressed: 
         running = False
@@ -193,11 +193,11 @@ while running:
                                          "xy_pos": ac.position,
                                          "heading": ac.heading}
         for tug in tug_lst:
-            # if tug.status == "taxiing":
-            current_states[tug.id] = {"type": "tug",
-                                        "ac_id": tug.id,
-                                        "xy_pos": tug.position,
-                                        "heading": tug.heading}
+            if tug.status != "following":
+                current_states[tug.id] = {"type": "tug",
+                                            "ac_id": tug.id,
+                                            "xy_pos": tug.position,
+                                            "heading": tug.heading}
         escape_pressed = map_running(map_properties, current_states, t)
         timer.sleep(visualization_speed) 
       
@@ -284,8 +284,12 @@ while running:
                 ##Ac arrival goal node: Tug set back in control to plan it's route and be available (deconnect from aircraft)
                 #tug.idle == False
                 #tug.status == 'available'
+        if t % 0.5 == 0:
+            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
-
+        for ac in aircraft_lst:
+            if ac.status == "planning":
+                run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
             
 
         #implement the check to see if two aircraft will collide with eachother
@@ -294,8 +298,7 @@ while running:
 
 
         #Check the planning for the taxibots
-        if t % 0.5 == 0:
-            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+
 
         
     elif planner == "Prioritized":
@@ -312,8 +315,10 @@ while running:
             ac.move(dt, t)
     
     for tug in tug_lst:
-        if tug.status == "available": #TODO Set to new states
-            tug.move(dt,t)
+        if tug.status != "holding" and tug.status != "following" and tug.status != "arrived": #TODO Set to new states
+            print(tug.status)
+            print("in the loop at", t)
+            tug.move(dt, t)
                            
     t = t + dt
           

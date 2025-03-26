@@ -23,12 +23,13 @@ class Taxibot(object):
         self.status = "available"                   #begin status
         self.planning_status = None            #ensure we dont plan when we are taxxiing already
         self.idle = True                            #If idling, to keep aircraft on the map without a driving plan
+        self.Goal_AC = None
 
         #Route related
                 #Route related
         self.status = "holding"
         self.path_to_goal = [] #planned path left from current location
-        self.from_to = [spawn_node, holding_location]
+        self.from_to = [0,0]
         self.constraints = []
 
         #State related
@@ -68,7 +69,7 @@ class Taxibot(object):
     
         self.heading = heading
 
-    def plan_independent(self, nodes_dict, edges_dict, heuristics, t):
+    def plan_independent(self, nodes_dict, heuristics, t):
         """
         Plans a path for taxiing aircraft assuming that it knows the entire layout.
         Other traffic is not taken into account.
@@ -77,7 +78,7 @@ class Taxibot(object):
             - edges_dict: edges_dict with current edge weights
         """
 
-        success, path = simple_single_agent_astar(nodes_dict, self.start_node, self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+        success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
 
         #Make sure the path is broadcasted to some central location
 
@@ -111,12 +112,8 @@ class Taxibot(object):
         #Update position with rounded values
         x = xy_to[0]-xy_from[0]
         y = xy_to[1]-xy_from[1]
-        if abs(x) > 1E-5 and abs(y) > 1E-5:
-            x_normalized = x / math.sqrt(x**2+y**2)
-            y_normalized = y / math.sqrt(x**2+y**2)
-        else:
-            x_normalized = 0.
-            y_normalized = 0.
+        x_normalized = x / math.sqrt(x**2+y**2)
+        y_normalized = y / math.sqrt(x**2+y**2)
         posx = round(self.position[0] + x_normalized * distance_to_move ,2) #round to prevent errors
         posy = round(self.position[1] + y_normalized * distance_to_move ,2) #round to prevent errors
         self.position = (posx, posy)  
@@ -124,7 +121,7 @@ class Taxibot(object):
 
         #Check if goal is reached or if to_node is reached
         if self.position == xy_to and self.path_to_goal[0][1] == t+dt: #If with this move its current to node is reached
-            if self.position == self.nodes_dict[self.goal]["xy_pos"]: #if the final goal is reached
+            if self.position == self.nodes_dict[self.goal_node]["xy_pos"]: #if the final goal is reached
                 self.status = "arrived"
 
             else:  #current to_node is reached, update the remaining path
@@ -141,7 +138,7 @@ class Taxibot(object):
 
     
     def Hold_position(self, t, heuristics):
-        self.goal = self.holding_location
+        self.goal_node = self.holding_location
         #Set the path of the taxibot to its holding position for the next timestep
         self.path_to_goal = [(self.holding_location, t+0.5), (self.holding_location, t+1), (self.holding_location, t+1.5)]
         self.from_to = [self.holding_location, self.holding_location]
@@ -154,12 +151,12 @@ class Taxibot(object):
         self.start_node = self.from_to[0]
         self.plan_independent(self.nodes_dict, heuristics, t)
         #once it has planned a route, set the status to taxxiing
-        self.planning_status == "taxiing"
+        self.status = "taxiing, available"
         return
     
-    def Taxi_to_AC(self, t, heuristics):
-        self.plan_independent(self.nodes_dict, self.edges_dict, heuristics, t)
-        self.planning_status == "taxiing"
+    def Taxi_to_AC(self, t, heuristics):        
+        self.plan_independent(self.nodes_dict, heuristics, t)
+        self.status = "taxiing, unavailable"
         return
 
     def broadcast_next_nodes(self, horizon_length):

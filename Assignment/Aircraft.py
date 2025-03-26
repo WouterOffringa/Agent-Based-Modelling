@@ -251,7 +251,7 @@ class Aircraft(object):
         """
         Requests a taxibot for the aircraft.
         """
-        #Initialize the list of the traveltimes from each taxibot to the aircraft
+        #Initialize the list of the traveltimes from each taxibot to the 
         traveltime_list = []
         for taxibot in taxibot_list:
             print("I'm in the for loop in the request function")
@@ -272,6 +272,8 @@ class Aircraft(object):
         traveltime_list = np.array(traveltime_list)
         winning_tug = taxibot_list[np.argmin(traveltime_list)]
         winning_tug.status = "called by aircraft"
+        winning_tug.goal_node = self.start
+        winning_tug.Goal_AC = self
         
             #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
