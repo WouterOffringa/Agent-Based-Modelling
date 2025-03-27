@@ -154,15 +154,24 @@ class Aircraft(object):
             if path[0][1] != t:
                 raise Exception("Something is wrong with the timing of the path planning")
             
-    def broadcast_next_nodes(self, horizon_length):
+    def broadcast_next_nodes(self, horizon):
         """
         Find and broadcasts the next nodes when requested to the central location.
         """
-        ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon_length]
+
+        ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon]
+
+        #append the current node in the beginning of ac_nextsteps
+        ac_nextsteps.insert(0, self.from_to[0])
+        
+        if len(ac_nextsteps) == 3:
+            ac_nextsteps.append(None)
+        if len(ac_nextsteps) == 2:
+            ac_nextsteps.append(None)
+            ac_nextsteps.append(None)
         if len(ac_nextsteps) == 1:
             ac_nextsteps.append(None)
             ac_nextsteps.append(None)
-        elif len(ac_nextsteps) == 2:
             ac_nextsteps.append(None)
 
         return ac_nextsteps

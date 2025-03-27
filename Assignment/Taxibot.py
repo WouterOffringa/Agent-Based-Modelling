@@ -166,18 +166,27 @@ class Taxibot(object):
         # self.status = "taxiing, unavailable"
         return
 
-    def broadcast_next_nodes(self, horizon_length):
+    def broadcast_next_nodes(self, horizon):
         """
         Find and broadcasts the next nodes when requested to the central location.
         """
-        agent_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon_length]
-        if len(agent_nextsteps) == 1:
-            agent_nextsteps.append(None)
-            agent_nextsteps.append(None)
-        elif len(agent_nextsteps) == 2:
-            agent_nextsteps.append(None)
 
-        return agent_nextsteps
+        ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon]
+
+        #append the current node in the beginning of ac_nextsteps
+        ac_nextsteps.insert(0, self.from_to[0])
+        
+        if len(ac_nextsteps) == 3:
+            ac_nextsteps.append(None)
+        if len(ac_nextsteps) == 2:
+            ac_nextsteps.append(None)
+            ac_nextsteps.append(None)
+        if len(ac_nextsteps) == 1:
+            ac_nextsteps.append(None)
+            ac_nextsteps.append(None)
+            ac_nextsteps.append(None)
+
+        return ac_nextsteps
 
     def conflict_detection(self, agent_lst, horizon, t, edges_dict,nodes_dict, heuristics):
         """

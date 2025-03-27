@@ -179,7 +179,8 @@ arrival_available, dep_available = True, True
 print("\nSimulation Started\n")
 while running:
 
-    t= round(t,2)    
+    t= round(t,2) 
+
     #Check conditions for termination
     if t >= time_end or escape_pressed: 
         running = False
@@ -263,22 +264,22 @@ while running:
     # spawning_time = 40
     # if (t-1) % spawning_time == 0:
     #     #case 1 - 4 aircraft which touch in the bottom right corner
-        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
-        # ac.status = "holding"
-        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
-        # ac1.status = "holding"
-        # ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
-        # ac2.status = "holding"
-        # ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
-        # ac3.status = "holding"
-        # aircraft_lst.append(ac)
-        # agent_lst.append(ac)
-        # aircraft_lst.append(ac1)
-        # agent_lst.append(ac1)
-        # aircraft_lst.append(ac2)
-        # agent_lst.append(ac2)
-        # aircraft_lst.append(ac3)
-        # agent_lst.append(ac3)
+    #     ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
+    #     ac.status = "holding"
+    #     ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
+    #     ac1.status = "holding"
+    #     ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
+    #     ac2.status = "holding"
+    #     ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
+    #     ac3.status = "holding"
+    #     aircraft_lst.append(ac)
+    #     agent_lst.append(ac)
+    #     aircraft_lst.append(ac1)
+    #     agent_lst.append(ac1)
+    #     aircraft_lst.append(ac2)
+    #     agent_lst.append(ac2)
+    #     aircraft_lst.append(ac3)
+    #     agent_lst.append(ac3)
         
     # if (t-1) % spawning_time == 10:
     #     # case 1 expansion
@@ -311,7 +312,7 @@ while running:
 
 
 
-        # constraints = []
+        constraints = []
     # if t == 25:
     #     aircraft_lst.clear()
         # this clears the aircraft list just for case 2
