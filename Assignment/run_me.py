@@ -187,7 +187,7 @@ while running:
     if visualization:
         current_states = {} #Collect current states of all aircraft
         for ac in aircraft_lst:
-            if ac.status == "taxiing" or ac.status == "holding":
+            if ac.status == "taxiing" or ac.status == "holding" or ac.status == "pickup":
                 current_states[ac.id] = {"type": "aircraft",
                                         "ac_id": ac.id,
                                          "xy_pos": ac.position,
@@ -220,27 +220,27 @@ while running:
 
 
     # ==== Fixed Spawning ====
-    # spawning_time = 25
+    # spawning_time = 40
     # if (t-1) % spawning_time == 0:
     #     #case 1 - 4 aircraft which touch in the bottom right corner
-    #     ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
-    #     ac.status = "holding"
-    #     ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
-    #     ac1.status = "holding"
-    #     ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
-    #     ac2.status = "holding"
-    #     ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
-    #     ac3.status = "holding"
-    #     aircraft_lst.append(ac)
-    #     agent_lst.append(ac)
-    #     aircraft_lst.append(ac1)
-    #     agent_lst.append(ac1)
-    #     aircraft_lst.append(ac2)
-    #     agent_lst.append(ac2)
-    #     aircraft_lst.append(ac3)
-    #     agent_lst.append(ac3)
+        # ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
+        # ac.status = "holding"
+        # ac1 = Aircraft(2, 'D', 36,37,t, nodes_dict)
+        # ac1.status = "holding"
+        # ac2 = Aircraft(3, 'A', 38,98,t, nodes_dict) 
+        # ac2.status = "holding"
+        # ac3 = Aircraft(4, 'D', 98,38,t, nodes_dict)
+        # ac3.status = "holding"
+        # aircraft_lst.append(ac)
+        # agent_lst.append(ac)
+        # aircraft_lst.append(ac1)
+        # agent_lst.append(ac1)
+        # aircraft_lst.append(ac2)
+        # agent_lst.append(ac2)
+        # aircraft_lst.append(ac3)
+        # agent_lst.append(ac3)
         
-        # case 2 - 4 aircraft which needs to cross diagonally
+        # # case 2 - 4 aircraft which needs to cross diagonally
         # ac = Aircraft(1, 'A', 37,34,t, nodes_dict)
         # ac.status = "holding"
         # ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
@@ -260,13 +260,13 @@ while running:
         
 
 
-    #     constraints = []
+        # constraints = []
     # if t == 25:
     #     aircraft_lst.clear()
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16, 23, 107]
+    spawning_locations = [7, 9, 16] #, 23, 107]
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
@@ -279,12 +279,11 @@ while running:
     
     #Do planning 
     if planner == "Independent":     
-        if (t-1) % spawning_time == 0: #(Hint: Think about the condition that triggers (re)planning) 
-            for ac in aircraft_lst:
-
-                # run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-                if ac.status == "holding":
-                    ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+        #if (t-1) % 1 == 0: #(Hint: Think about the condition that triggers (re)planning) 
+        #    for ac in aircraft_lst:
+        #       while ac.status == "holding":
+        #        # run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+        #            ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
 
         if t % 0.5 == 0:
             run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
@@ -314,9 +313,10 @@ while running:
     for ac in aircraft_lst: 
         if ac.status == "taxiing": 
             ac.move(dt, t)
+        if ac.status == "holding" and t % 0.5 == 0:
+            ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
     
     for tug in tug_lst:
-        # if tug.status != "holding" and tug.status != "following" and tug.status != "arrived": #TODO Set to new states
         if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
             tug.move(dt, t)
                            

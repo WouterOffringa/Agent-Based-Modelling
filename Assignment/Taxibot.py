@@ -158,12 +158,12 @@ class Taxibot(object):
         self.from_to[0] = self.Goal_AC.goal
         self.plan_independent(self.nodes_dict, edges_dict, heuristics, t)
         #once it has planned a route, set the status to taxxiing
-        self.status = "taxiing, available"
+        # self.status = "taxiing, available"
         return
     
-    def Taxi_to_AC(self, t, edges_dict, heuristics):        
+    def Taxi_to_AC(self, t, edges_dict, heuristics):  
         self.plan_independent(self.nodes_dict, edges_dict, heuristics, t)
-        self.status = "taxiing, unavailable"
+        # self.status = "taxiing, unavailable"
         return
 
     def broadcast_next_nodes(self, horizon_length):

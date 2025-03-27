@@ -261,8 +261,9 @@ class Aircraft(object):
         """
         #Initialize the list of the traveltimes from each taxibot to the arrived
         traveltime_list = []
+        available_taxibots = []
+
         for taxibot in taxibot_list:
-            # print("I'm in the for loop in the request function")
             if taxibot.status == "holding" or taxibot.status == "taxiing, available":
                 #Calculate the distance between the taxibot and the aircraft
                 taxibot_pos = taxibot.from_to[0]
@@ -274,17 +275,30 @@ class Aircraft(object):
                 # print(route_to_ac)
                 travel_time = route_to_ac[-1][1] #The final timestep arrival time
                 traveltime_list.append(travel_time)
-            else:
-                traveltime_list.append(10000)
-                
-        # print(traveltime_list)
-        traveltime_list = np.array(traveltime_list)
-        winning_tug = taxibot_list[np.argmin(traveltime_list)]
-        winning_tug.status = "called by aircraft"
-        winning_tug.goal_node = self.start
-        winning_tug.Goal_AC = self
+                available_taxibots.append(taxibot) # ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+
+        print("Traveltime list for aircraft", self.id, ":", traveltime_list)
+
+        if traveltime_list != []:
+            traveltime_list = np.array(traveltime_list)
+            lowest_traveltime = np.argmin(traveltime_list)
+
+            # the winning tug has the index of the lowest traveltime
+            winning_tug = available_taxibots[lowest_traveltime]
+
+
+            # winning_tug = available_taxibots[np.argmin(traveltime_list)]
+            winning_tug.status = "called by aircraft"
+            winning_tug.goal_node = self.start
+            winning_tug.Goal_AC = self
+            self.status = "pickup"
+            print("Taxibot", winning_tug.id, "is called by aircraft", self.id, "at t=", t,)
         
             #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
+
+        else:
+            print("No available taxibots for aircraft", self.id, "at t=", t)
+
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
                                             'delay': 2,
