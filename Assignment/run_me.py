@@ -173,6 +173,7 @@ escape_pressed = False
 time_end = simulation_time
 dt = 0.1 #should be factor of 0.5 (0.5/dt should be integer)
 t= 0
+i=0
 arrival_available, dep_available = True, True
 
 
@@ -212,7 +213,6 @@ while running:
     # ==== Random Spawning ====
     spawning_time = 4
     if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
-        i = len(aircraft_lst) + 1
         ac_type = random.choice(['A','D']) #randomly choose arrival or departure
         if ac_type == 'D':
             gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
@@ -224,8 +224,9 @@ while running:
                     elif ac.from_to[0] in available_gates:
                         available_gates.remove(ac.from_to[0])
 
-            print("Available gates for departure: ", gates, available_gates)	
+            print("Available gates for departure: ", available_gates)	
             if len(available_gates) > 0:
+                i += 1
                 dep_available = True
                 spawn_gate = random.choice(available_gates)
                 ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
@@ -241,14 +242,14 @@ while running:
             rwy_arr = [101, 102]
             available_rwy = rwy_arr
             for ac in aircraft_lst:
-                if ac.status == "holding" or ac.status == "pickup" and not ac.status == "arrived":
+                if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
                     if ac.start in available_rwy:
-                        print("hier gaat het fout")
                         available_rwy.remove(ac.start)
                     elif ac.from_to[0] in available_rwy:
                         available_rwy.remove(ac.from_to[0])
             print("Available runways for arrival: ", available_rwy)
             if len(available_rwy) > 0:
+                i += 1
                 arrival_available = True
                 spawn_rwy = random.choice(available_rwy)
                 ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
@@ -357,6 +358,8 @@ while running:
             ac.move(dt, t)
         if ac.status == "holding" and t % 0.5 == 0:
             ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+        # if ac.status == "arrived":
+            # aircraft_lst.remove(ac)
 
     #Move the taxibots that are taxiing
     for tug in tug_lst:

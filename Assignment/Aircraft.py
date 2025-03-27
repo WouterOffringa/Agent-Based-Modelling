@@ -108,6 +108,7 @@ class Aircraft(object):
             if self.position == self.nodes_dict[self.goal]["xy_pos"]: #if the final goal is reached
                 self.status = "arrived"
                 print("\nAircraft", self.id, "has arrived at its destination at t=", t)
+                
 
             else:  #current to_node is reached, update the remaining path
                 remaining_path = self.path_to_goal
@@ -245,7 +246,7 @@ class Aircraft(object):
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
         if self_priority > conflicted_priority:
-            print("_")#_________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
             
         if conflicted_priority > self_priority or self_priority == conflicted_priority:
             # print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")

@@ -255,7 +255,7 @@ class Taxibot(object):
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
         if self_priority > conflicted_priority:
-            print("_")#_________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
             
         if conflicted_priority > self_priority or self_priority == conflicted_priority:
             # print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
