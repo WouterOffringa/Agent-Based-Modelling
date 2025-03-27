@@ -230,7 +230,7 @@ class Aircraft(object):
         # TODO add conflict resolution for edge conflicts
 
         #find own priority level and that of the conflicted aircraft
-        print("in conflict resultion of ", self.id)
+        # print("in conflict resultion of ", self.id)
         self_priority = self.determine_prioritylevel(t, edges_dict)
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
@@ -297,33 +297,26 @@ class Aircraft(object):
             #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
         else:
-            print("No available taxibots for aircraft", self.id, "at t=", t)
+            self.delay += 0.5
+            print("No available taxibots for aircraft", self.id, "at t=", t, "with delay", self.delay)
+
 
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
                                             'delay': 2,
-                                            'movementoptions': 8,
-                                            'pickup': 7
+                                            'movementoptions': -1,
+                                            'pickup': 1
                                             }):
-
-        # print("Determining priority level for", self.id)
-
-        # Taxibots that aren't doing anything have absolute lowest priority
-        if self.status == "unassigned":
-            return -1000
         
-        else:
-            return sum([
-                        (self.path_to_goal[-1][1] - t)*weights['routelength'], # Remaining route length (Agents with a shorter time to go get a smaller penalty)
-                        self.delay*weights['delay'], # Agents that have already experienced delay get higher priority
-                        (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[1]]))*weights['movementoptions'], # Amount of connected nodes to the current node, weighs how easy it is to get out of the way
-                        (self.status == "pickup") * weights["pickup"] # Taxibots that are picking up an aircraft have higher priority
-                        ])
+        prioritylevel = sum([
+                            self.delay * weights['delay'], 
+                            (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])) * weights['movementoptions'],
+                            (self.path_to_goal[-1][1] - t) * weights['routelength'], 30
+                            ])
 
-                        # TODO: Maybe change from_to[0] to from_to[1], try it if stuff breaks - Cijsouw
+        print("Priority level of aircraft", self.id, "is", prioritylevel, "because delay is", self.delay, "and remaining path is", (self.path_to_goal[-1][1] - t))
 
-                        # I changed it to from_to[1] because the from_to[0] is the current node, and the from_to[1] is the next node,
-                        # this gave better results for the test cases. Not sure if this is implemented completely correctly though - Offringa
+        return prioritylevel
 
 
 
