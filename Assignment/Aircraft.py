@@ -36,7 +36,7 @@ class Aircraft(object):
         #State related
         self.heading = 0
         self.position = nodes_dict[self.start]["xy_pos"] #xy position on map
-        self.delay = 0
+        self.delay = None
 
         #Replanning related
         self.last_node = None
@@ -299,6 +299,11 @@ class Aircraft(object):
         else:
             print("No available taxibots for aircraft", self.id, "at t=", t)
 
+    def track_delay(self, t):
+        if self.status == "taxiing" and self.delay == None:
+            self.delay = t - self.spawntime
+            print("I'm in the function!", self.delay)
+        return
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
                                             'delay': 2,
@@ -308,17 +313,19 @@ class Aircraft(object):
 
         # print("Determining priority level for", self.id)
 
-        # Taxibots that aren't doing anything have absolute lowest priority
-        if self.status == "unassigned":
-            return -1000
+        # Unassigned taxibot have low priority, but this is not for aircraft so comment this out
+        # if self.status == "unassigned":
+        #     return -1000
+
+        ##Possible to do: distinction arriving and departing aircraft
         
-        else:
-            return sum([
-                        (self.path_to_goal[-1][1] - t)*weights['routelength'], # Remaining route length (Agents with a shorter time to go get a smaller penalty)
-                        self.delay*weights['delay'], # Agents that have already experienced delay get higher priority
-                        (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[1]]))*weights['movementoptions'], # Amount of connected nodes to the current node, weighs how easy it is to get out of the way
-                        (self.status == "pickup") * weights["pickup"] # Taxibots that are picking up an aircraft have higher priority
-                        ])
+
+        return sum([
+                    (self.path_to_goal[-1][1] - t)*weights['routelength'], # Remaining route length (Agents with a shorter time to go get a smaller penalty)
+                    self.delay*weights['delay'], # Agents that have already experienced delay get higher priority
+                    (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[1]]))*weights['movementoptions'], # Amount of connected nodes to the current node, weighs how easy it is to get out of the way
+                    (self.status == "pickup") * weights["pickup"] # Taxibots that are picking up an aircraft have higher priority
+                    ])
 
                         # TODO: Maybe change from_to[0] to from_to[1], try it if stuff breaks - Cijsouw
 

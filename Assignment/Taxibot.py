@@ -273,13 +273,13 @@ class Taxibot(object):
                                             }):
 
         # Taxibots that aren't doing anything have absolute lowest priority
-        if self.status == "unassigned":
+        if self.status == "taxiing, available":
             return -1000
         
         else:
             return sum([
                         # Remaining route length (Agents with a shorter time to go get a smaller penalty)
-                        (self.path_to_goal[-1][1] - t)*weights['routelength'], 
+                        (self.path_to_goal[-1][1] - t) * weights['routelength'],
 
                         # Agents that have already experienced delay get higher priority
                         self.delay*weights['delay'], 
@@ -288,6 +288,6 @@ class Taxibot(object):
                         (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[0]]))*weights['movementoptions'], 
 
                         # Taxibots that are picking up an aircraft have higher priority
-                        (self.status == "pickup") * weights["pickup"]
+                        (self.status == "taxiing, unavailable") * weights["pickup"]
                         ])
         

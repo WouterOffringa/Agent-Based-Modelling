@@ -205,25 +205,25 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    spawning_time = 5
-    if (t-1) % spawning_time == 0:
-        i = len(aircraft_lst) + 1
-        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
-        if ac_type == 'A':
-            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
-            ac.status = "holding"
-            aircraft_lst.append(ac)
-            agent_lst.append(ac)
-        else:
-            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
-            ac.status = "holding"
-            aircraft_lst.append(ac)
-            agent_lst.append(ac)
+    # spawning_time = 5
+    # if (t-1) % spawning_time == 0:
+    #     i = len(aircraft_lst) + 1
+    #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
+    #     if ac_type == 'A':
+    #         ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+    #         ac.status = "holding"
+    #         aircraft_lst.append(ac)
+    #         agent_lst.append(ac)
+    #     else:
+    #         ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+    #         ac.status = "holding"
+    #         aircraft_lst.append(ac)
+    #         agent_lst.append(ac)
 
 
     # ==== Fixed Spawning ====
-    # spawning_time = 40
-    # if (t-1) % spawning_time == 0:
+    spawning_time = 40
+    if (t-1) % spawning_time == 0:
     #     #case 1 - 4 aircraft which touch in the bottom right corner
         # ac = Aircraft(1, 'A', 37,36,t, nodes_dict)
         # ac.status = "holding"
@@ -286,7 +286,7 @@ while running:
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16, 23, 107]
+    spawning_locations = [7, 9, 16]# 23, 107]
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
@@ -335,6 +335,8 @@ while running:
             ac.move(dt, t)
         if ac.status == "holding" and t % 0.5 == 0:
             ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+
+
 
     for tug in tug_lst:
         if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
