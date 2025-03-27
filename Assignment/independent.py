@@ -5,7 +5,8 @@ This is an example planner, that calls all agents to plan their route independen
 def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=[]):
     for ac in aircraft_lst:
         if ac.status == "planning":
-            ac.status = "taxiing" 
+            ac.status = "taxiing"
+            ac.track_delay(t)
             ac.position = nodes_dict[ac.start]["xy_pos"]
             ac.plan_independent(nodes_dict, edges_dict, heuristics, t)
             # print("Aircraft", ac.id, "is taxiing, its next states are:", ac.path_to_goal)

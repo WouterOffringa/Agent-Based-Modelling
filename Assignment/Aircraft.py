@@ -36,7 +36,7 @@ class Aircraft(object):
         #State related
         self.heading = 0
         self.position = nodes_dict[self.start]["xy_pos"] #xy position on map
-        self.delay = 0
+        self.delay = None
 
         #Replanning related
         self.last_node = None
@@ -297,10 +297,14 @@ class Aircraft(object):
             #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
         else:
-            self.delay += 0.5
             print("No available taxibots for aircraft", self.id, "at t=", t, "with delay", self.delay)
 
 
+    def track_delay(self, t):
+        if self.status == "taxiing" and self.delay == None:
+            self.delay = t - self.spawntime
+            print("I'm in the function!", self.delay)
+        return
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
                                             'delay': 2,
