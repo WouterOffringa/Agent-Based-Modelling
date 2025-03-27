@@ -223,14 +223,14 @@ class Taxibot(object):
                     Conflicted_agent = agent
                     Conflicted_node = own_nextsteps[tau]
                     conflict_time = horizon[tau]
-                    print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
+                    # print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics)
 
                 if dummynode not in own_nextedges[tau] and own_nextedges[tau] == other_edges[agent][tau]:
                     Conflicted_agent = agent
                     Conflicted_edge = own_nextedges[tau]
                     conflict_time = horizon[tau]
-                    print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
+                    # print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics)
 
     def Conflict_resolution(self, conflicted_agent, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
@@ -241,15 +241,15 @@ class Taxibot(object):
         # TODO add conflict resolution for edge conflicts
 
         #find own priority level and that of the conflicted aircraft
-        print("in conflict resultion of ", self.id)
+        # print("in conflict resultion of ", self.id)
         self_priority = self.determine_prioritylevel(t, edges_dict)
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
         if self_priority > conflicted_priority:
-            print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            print("_")#_________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
             
         if conflicted_priority > self_priority or self_priority == conflicted_priority:
-            print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
+            # print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
             
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
@@ -266,28 +266,25 @@ class Taxibot(object):
         return
             
 
-    def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
-                                            'delay': 3,
-                                            'movementoptions': 5,
-                                            'pickup': 7
-                                            }):
 
-        # Taxibots that aren't doing anything have absolute lowest priority
-        if self.status == "taxiing, available":
-            return -1000
         
-        else:
-            return sum([
-                        # Remaining route length (Agents with a shorter time to go get a smaller penalty)
-                        (self.path_to_goal[-1][1] - t) * weights['routelength'],
+    def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
+                                            'movementoptions': -1,
+                                            }):
+        
+        movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
 
-                        # Agents that have already experienced delay get higher priority
-                        self.delay*weights['delay'], 
+        prioritylevel = sum([
+                            movementoptions * weights['movementoptions'],
+                            (self.path_to_goal[-1][1] - t) * weights['routelength']
+                            ])
 
-                        # Amount of connected nodes to the current node, weighs how easy it is to get out of the way TODO: May be from_to[1], try it if stuff breaks
-                        (4-sum([1 for edge in edges_dict if edge[0] == self.from_to[0]]))*weights['movementoptions'], 
+        # print("Priority level of tug", self.id, "is", prioritylevel, "because remaining path length is", (self.path_to_goal[-1][1] - t), "and movement options are", (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])))
 
-                        # Taxibots that are picking up an aircraft have higher priority
-                        (self.status == "taxiing, unavailable") * weights["pickup"]
-                        ])
+        if movementoptions == 1:
+            prioritylevel = 1000
+        elif self.status == "taxiing, available":
+            prioritylevel = -1000
+        
+        return prioritylevel
         

@@ -157,8 +157,10 @@ if visualization:
 
 # create lists of different kind of nodes
 gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
-rwy_dep = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_d"]
-rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
+# rwy_dep = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_d"]
+rwy_dep = [95, 96]
+# rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
+rwy_arr = [101, 102]
 tug_gates = [7, 9, 16, 23, 107]
 
 # =============================================================================
@@ -171,6 +173,8 @@ escape_pressed = False
 time_end = simulation_time
 dt = 0.1 #should be factor of 0.5 (0.5/dt should be integer)
 t= 0
+arrival_available, dep_available = True, True
+
 
 print("\nSimulation Started\n")
 while running:
@@ -205,43 +209,54 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    spawning_time = 5
-    if (t-1) % spawning_time == 0:
+    spawning_time = 4
+    if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
         i = len(aircraft_lst) + 1
         ac_type = random.choice(['A','D']) #randomly choose arrival or departure
         if ac_type == 'D':
+            gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
             available_gates = gates
             for ac in aircraft_lst:
-                if ac.status == "holding" or ac.status == "pickup":
+                if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
                     if ac.start in available_gates:
                         available_gates.remove(ac.start)
                     elif ac.from_to[0] in available_gates:
                         available_gates.remove(ac.from_to[0])
+
+            print("Available gates for departure: ", gates, available_gates)	
             if len(available_gates) > 0:
+                dep_available = True
                 spawn_gate = random.choice(available_gates)
                 ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
                 ac.status = "holding"
                 aircraft_lst.append(ac)
                 agent_lst.append(ac)
+
             else:
-                continue
+                print("==No gates available for departure")
+                dep_available = False
                     
         else:
+            rwy_arr = [101, 102]
             available_rwy = rwy_arr
             for ac in aircraft_lst:
-                if ac.status == "holding" or ac.status == "pickup":
+                if ac.status == "holding" or ac.status == "pickup" and not ac.status == "arrived":
                     if ac.start in available_rwy:
+                        print("hier gaat het fout")
                         available_rwy.remove(ac.start)
                     elif ac.from_to[0] in available_rwy:
                         available_rwy.remove(ac.from_to[0])
+            print("Available runways for arrival: ", available_rwy)
             if len(available_rwy) > 0:
+                arrival_available = True
                 spawn_rwy = random.choice(available_rwy)
                 ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
                 ac.status = "holding"
                 aircraft_lst.append(ac)
                 agent_lst.append(ac)
             else:
-                continue
+                print("==No runways available for arrival")
+                arrival_available = False
 
 
     # ==== Fixed Spawning ====
@@ -302,7 +317,7 @@ while running:
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16]# 23, 107]
+    spawning_locations = [7, 9, 16, 23, 107]
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
@@ -315,28 +330,17 @@ while running:
     
     #Do planning 
     if planner == "Independent":     
-        #if (t-1) % 1 == 0: #(Hint: Think about the condition that triggers (re)planning)
-        #    for ac in aircraft_lst:
-        #       while ac.status == "holding":
-        #        # run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-        #            ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
 
-        if t % 0.5 == 0:
-            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-
-        for ac in aircraft_lst:
-            if ac.status == "planning":
-                run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
-            
-
-        #implement the check to see if two aircraft will collide with eachother
         if t % 0.5 == 0:
             PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
+            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+            run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
+        # for ac in aircraft_lst:
+        #     if ac.status == "planning":
+        #         run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+            
 
-        #Check the planning for the taxibots
-
-        
     elif planner == "Prioritized":
         run_prioritized_planner()
     elif planner == "CBS":
@@ -345,6 +349,7 @@ while running:
     else:
         raise Exception("Planner:", planner, "is not defined.")
                        
+
     #Move the aircraft that are taxiing
     for ac in aircraft_lst: 
         if ac.status == "taxiing": 
@@ -352,8 +357,7 @@ while running:
         if ac.status == "holding" and t % 0.5 == 0:
             ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
 
-
-
+    #Move the taxibots that are taxiing
     for tug in tug_lst:
         if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
             tug.move(dt, t)

@@ -107,6 +107,7 @@ class Aircraft(object):
         if self.position == xy_to and self.path_to_goal[0][1] == t+dt: #If with this move its current to node is reached
             if self.position == self.nodes_dict[self.goal]["xy_pos"]: #if the final goal is reached
                 self.status = "arrived"
+                print("\nAircraft", self.id, "has arrived at its destination at t=", t)
 
             else:  #current to_node is reached, update the remaining path
                 remaining_path = self.path_to_goal
@@ -136,7 +137,7 @@ class Aircraft(object):
             if self.replan == False:
                 success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
             if self.replan == True:
-                print("______________Replanning for", self.id, "with", len(self.constraints), "constraints:", self.constraints)
+                # print("______________Replanning for", self.id, "with", len(self.constraints), "constraints:", self.constraints)
                 success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
                 self.replan = False
             #Make sure the path is broadcasted to some central location
@@ -210,14 +211,14 @@ class Aircraft(object):
                     Conflicted_agent = agent
                     Conflicted_node = own_nextsteps[tau]
                     conflict_time = horizon[tau]
-                    print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
+                    # print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics)
 
                 if dummynode not in own_nextedges[tau] and own_nextedges[tau] == other_edges[agent][tau]:
                     Conflicted_agent = agent
                     Conflicted_edge = own_nextedges[tau]
                     conflict_time = horizon[tau]
-                    print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
+                    # print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics)
 
 
@@ -235,10 +236,10 @@ class Aircraft(object):
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
         if self_priority > conflicted_priority:
-            print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            print("_")#_________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
             
         if conflicted_priority > self_priority or self_priority == conflicted_priority:
-            print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
+            # print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
             
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
@@ -277,7 +278,7 @@ class Aircraft(object):
                 traveltime_list.append(travel_time)
                 available_taxibots.append(taxibot) # ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
 
-        print("Traveltime list for aircraft", self.id, ":", traveltime_list)
+        # print("Traveltime list for aircraft", self.id, ":", traveltime_list)
 
         if traveltime_list != []:
             traveltime_list = np.array(traveltime_list)
@@ -297,28 +298,32 @@ class Aircraft(object):
             #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
         else:
-            print("No available taxibots for aircraft", self.id, "at t=", t, "with delay", self.delay)
+            print("No available taxibots for aircraft", self.id, "at t=", t)
 
 
     def track_delay(self, t):
         if self.status == "taxiing" and self.delay == None:
             self.delay = t - self.spawntime
-            print("I'm in the function!", self.delay)
+            # print("Meine Mutter hat mir einfach erlaubt dass ich Cola trinken darf. Wie cool ist das bitte? Jetzt zuck ich Fortnite und trinke ich Cola. Yippieeeeeeee", self.delay)
         return
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
-                                            'delay': 2,
+                                            'delay': 3,
                                             'movementoptions': -1,
-                                            'pickup': 1
                                             }):
         
+        movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
+
         prioritylevel = sum([
                             self.delay * weights['delay'], 
-                            (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])) * weights['movementoptions'],
-                            (self.path_to_goal[-1][1] - t) * weights['routelength'], 30
+                            movementoptions * weights['movementoptions'],
+                            (self.path_to_goal[-1][1] - t) * weights['routelength']
                             ])
 
-        print("Priority level of aircraft", self.id, "is", prioritylevel, "because delay is", self.delay, "and remaining path is", (self.path_to_goal[-1][1] - t))
+        # print("Priority level of aircraft", self.id, "is", prioritylevel, "because delay is", self.delay, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])))
+
+        if movementoptions == 1:
+            prioritylevel = 1000
 
         return prioritylevel
 
