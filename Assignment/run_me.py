@@ -27,7 +27,7 @@ nodes_file = "nodes.xlsx" #xlsx file with for each node: id, x_pos, y_pos, type
 edges_file = "edges.xlsx" #xlsx file with for each edge: from  (node), to (node), length
 
 #Parameters that can be changed:
-simulation_time = 50
+simulation_time = 300
 planner = "Independent" #choose which planner to use (currently only Independent is implemented)
 
 #Visualization (can also be changed)
@@ -203,25 +203,25 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    # spawning_time = 6
-    # if (t-1) % spawning_time == 0:
-    #     i = len(aircraft_lst) + 1
-    #     ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
-    #     if ac_type == 'A':
-    #         ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
-    #         ac.status = "holding"
-    #         aircraft_lst.append(ac)
-    #         agent_lst.append(ac)
-    #     else:
-    #         ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
-    #         ac.status = "holding"
-    #         aircraft_lst.append(ac)
-    #         agent_lst.append(ac)
+    spawning_time = 7
+    if (t-1) % spawning_time == 0:
+        i = len(aircraft_lst) + 1
+        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
+        if ac_type == 'A':
+            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
+            ac.status = "holding"
+            aircraft_lst.append(ac)
+            agent_lst.append(ac)
+        else:
+            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
+            ac.status = "holding"
+            aircraft_lst.append(ac)
+            agent_lst.append(ac)
 
 
     # ==== Fixed Spawning ====
-    spawning_time = 25
-    if (t-1) % spawning_time == 0:
+    # spawning_time = 25
+    # if (t-1) % spawning_time == 0:
     #     #case 1 - 4 aircraft which touch in the bottom right corner
     #     ac = Aircraft(1, 'A', 37,36,t, nodes_dict) 
     #     ac.status = "holding"
@@ -241,22 +241,22 @@ while running:
     #     agent_lst.append(ac3)
         
         # case 2 - 4 aircraft which needs to cross diagonally
-        ac = Aircraft(1, 'A', 37,34,t, nodes_dict)
-        ac.status = "holding"
-        ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
-        ac1.status = "holding"
-        aircraft_lst.append(ac)
-        agent_lst.append(ac)
-        aircraft_lst.append(ac1)
-        agent_lst.append(ac1)
-        ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict)
-        ac2.status = "holding"
-        ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
-        ac3.status = "holding"
-        aircraft_lst.append(ac2)
-        agent_lst.append(ac2)
-        aircraft_lst.append(ac3)
-        agent_lst.append(ac3)
+        # ac = Aircraft(1, 'A', 37,34,t, nodes_dict)
+        # ac.status = "holding"
+        # ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
+        # ac1.status = "holding"
+        # aircraft_lst.append(ac)
+        # agent_lst.append(ac)
+        # aircraft_lst.append(ac1)
+        # agent_lst.append(ac1)
+        # ac2 = Aircraft(3, 'A', 34,37,t, nodes_dict)
+        # ac2.status = "holding"
+        # ac3 = Aircraft(4, 'D', 97,38,t, nodes_dict)
+        # ac3.status = "holding"
+        # aircraft_lst.append(ac2)
+        # agent_lst.append(ac2)
+        # aircraft_lst.append(ac3)
+        # agent_lst.append(ac3)
         
 
 
