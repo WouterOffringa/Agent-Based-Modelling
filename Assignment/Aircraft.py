@@ -312,7 +312,6 @@ class Aircraft(object):
     def track_delay(self, t):
         if self.status == "taxiing" and self.delay == None:
             self.delay = t - self.spawntime
-            print("I'm in the function!", self.delay)
         return
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
