@@ -209,17 +209,40 @@ while running:
     spawning_time = 5
     if (t-1) % spawning_time == 0:
         i = len(aircraft_lst) + 1
-        ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
-        if ac_type == 'A':
-            ac = Aircraft(i, 'A', random.choice(gates), random.choice(rwy_dep), t, nodes_dict)
-            ac.status = "holding"
-            aircraft_lst.append(ac)
-            agent_lst.append(ac)
+        ac_type = random.choice(['A','D']) #randomly choose arrival or departure
+        if ac_type == 'D':
+            available_gates = gates
+            for ac in aircraft_lst:
+                if ac.status == "holding" or ac.status == "pickup":
+                    if ac.start in available_gates:
+                        available_gates.remove(ac.start)
+                    elif ac.from_to[0] in available_gates:
+                        available_gates.remove(ac.from_to[0])
+            if len(available_gates) > 0:
+                spawn_gate = random.choice(available_gates)
+                ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
+                ac.status = "holding"
+                aircraft_lst.append(ac)
+                agent_lst.append(ac)
+            else:
+                continue
+                    
         else:
-            ac = Aircraft(i, 'D', random.choice(rwy_arr), random.choice(gates), t, nodes_dict)
-            ac.status = "holding"
-            aircraft_lst.append(ac)
-            agent_lst.append(ac)
+            available_rwy = rwy_arr
+            for ac in aircraft_lst:
+                if ac.status == "holding" or ac.status == "pickup":
+                    if ac.start in available_rwy:
+                        available_rwy.remove(ac.start)
+                    elif ac.from_to[0] in available_rwy:
+                        available_rwy.remove(ac.from_to[0])
+            if len(available_rwy) > 0:
+                spawn_rwy = random.choice(available_rwy)
+                ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
+                ac.status = "holding"
+                aircraft_lst.append(ac)
+                agent_lst.append(ac)
+            else:
+                continue
 
 
     # ==== Fixed Spawning ====
@@ -243,6 +266,17 @@ while running:
     #     aircraft_lst.append(ac3)
     #     agent_lst.append(ac3)
         
+    # if (t-1) % spawning_time == 10:
+    #     # case 1 expansion
+    #     ac4 = Aircraft(5, 'A', 37,36,t, nodes_dict) 
+    #     ac4.status = "holding"
+    #     ac5 = Aircraft(6, 'D', 36,37,t, nodes_dict)
+    #     ac5.status = "holding"
+    #     agent_lst.append(ac4)
+    #     agent_lst.append(ac5)
+    #     aircraft_lst.append(ac4)
+    #     aircraft_lst.append(ac5)
+
         # # case 2 - 4 aircraft which needs to cross diagonally
         # ac = Aircraft(1, 'A', 37,34,t, nodes_dict)
         # ac.status = "holding"
@@ -260,7 +294,7 @@ while running:
         # agent_lst.append(ac2)
         # aircraft_lst.append(ac3)
         # agent_lst.append(ac3)
-        
+
 
 
         constraints = []
@@ -269,7 +303,7 @@ while running:
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16, 23, 107]
+    spawning_locations = [7, 9, 16]# 23, 107]
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
@@ -282,7 +316,7 @@ while running:
     
     #Do planning 
     if planner == "Independent":     
-        #if (t-1) % 1 == 0: #(Hint: Think about the condition that triggers (re)planning) 
+        #if (t-1) % 1 == 0: #(Hint: Think about the condition that triggers (re)planning)
         #    for ac in aircraft_lst:
         #       while ac.status == "holding":
         #        # run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
@@ -318,7 +352,9 @@ while running:
             ac.move(dt, t)
         if ac.status == "holding" and t % 0.5 == 0:
             ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
-    
+
+
+
     for tug in tug_lst:
         if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
             tug.move(dt, t)
