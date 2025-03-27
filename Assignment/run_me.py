@@ -191,19 +191,21 @@ while running:
                 current_states[ac.id] = {"type": "aircraft",
                                         "ac_id": ac.id,
                                          "xy_pos": ac.position,
-                                         "heading": ac.heading}
+                                         "heading": ac.heading,
+                                        "status": ac.status}
         for tug in tug_lst:
             if tug.status != "following":
                 current_states[tug.id] = {"type": "tug",
                                             "ac_id": tug.id,
                                             "xy_pos": tug.position,
-                                            "heading": tug.heading}
+                                            "heading": tug.heading,
+                                            "status": tug.status}
         escape_pressed = map_running(map_properties, current_states, t)
         timer.sleep(visualization_speed) 
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    spawning_time = 7
+    spawning_time = 5
     if (t-1) % spawning_time == 0:
         i = len(aircraft_lst) + 1
         ac_type = random.choice(['A', 'D']) #randomly choose arrival or departure
@@ -284,7 +286,7 @@ while running:
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16] #, 23, 107]
+    spawning_locations = [7, 9, 16, 23, 107]
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):

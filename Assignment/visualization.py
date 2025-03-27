@@ -297,7 +297,7 @@ def map_running(map_properties, current_states, t):  # function to update the ma
     collision=False
     for ac1 in current_states:
         for ac2 in current_states:
-            if ac1 != ac2 and current_states[ac1]["xy_pos"] == current_states[ac2]["xy_pos"]:
+            if ac1 != ac2 and current_states[ac1]["status"] != "pickup" and current_states[ac2]["status"] != "pickup" and current_states[ac1]["xy_pos"] == current_states[ac2]["xy_pos"]:
                 collision=True
                 print("COLLISION - between", current_states[ac1]["ac_id"], "and", current_states[ac2]["ac_id"], "at location", current_states[ac1]["xy_pos"], "time", time)
                 plot_text(scr, "COLLISION", purple, 16, reso, current_states[ac1]["xy_pos"][0], current_states[ac1]["xy_pos"][1]+0.1, min_x, max_y, x_range, y_range, 0,
