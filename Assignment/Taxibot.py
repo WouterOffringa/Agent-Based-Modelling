@@ -262,7 +262,7 @@ class Taxibot(object):
             
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
-                for node in set(conflicted_node) & set(nodes_dict[conflicted_node[0]]['neighbors']) & set(nodes_dict[conflicted_node[0]]['neighbors']):
+                for node in set(conflicted_node).union(set(nodes_dict[conflicted_node[0]]['neighbors']), set(nodes_dict[conflicted_node[1]]['neighbors'])):
                     for tconfl in [conflict_time, conflict_time+.5, conflict_time+1.]:
                         self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
 
