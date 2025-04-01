@@ -314,6 +314,7 @@ class Aircraft(object):
     def track_delay(self, t):
         if self.status == "taxiing" and self.delay == None:
             self.delay = t - self.spawntime
+            #print('Im delayed by', self.delay)
             # print("Meine Mutter hat mir einfach erlaubt dass ich Cola trinken darf. Wie cool ist das bitte? Jetzt zuck ich Fortnite und trinke ich Cola. Yippieeeeeeee", self.delay)
         return
 

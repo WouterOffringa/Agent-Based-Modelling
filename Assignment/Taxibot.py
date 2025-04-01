@@ -207,7 +207,7 @@ class Taxibot(object):
             position_agent = agent.position
             position_self = self.position
             distance = math.sqrt((position_agent[0]-position_self[0])**2 + (position_agent[1]-position_self[1])**2)
-            if distance < 3 and (agent.status == "taxiing" or agent.status == "taxiing, available" or agent.status == "taxiing, unavailable") and agent.id != self.id:            
+            if distance < 3 and (agent.status == "taxiing" or agent.status == "taxiing, available" or agent.status == "taxiing, unavailable" or agent.status == 'holding') and agent.id != self.id:
                 other_nextsteps = agent.broadcast_next_nodes(horizon)
                 other_paths[agent] = other_nextsteps
                 other_nextsteps_d = [step if step != None else dummynode for step in other_nextsteps]
