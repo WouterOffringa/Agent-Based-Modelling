@@ -120,7 +120,7 @@ def is_constrained(curr_node, next_node, next_time, constraint_table):
     return False
 
 
-def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, current_time=0, constraints = [], t_path_max = 100):
+def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, current_time=0, constraints = [], t_path_max = 100, Reversing_Possible = False):
  
     t_max = t_path_max + current_time
     constraint_table = build_constraint_table(constraints, agent)
@@ -151,7 +151,7 @@ def simple_single_agent_astar(nodedict, start_node, goal_node, h_values, agent, 
                 return True, get_path(curr)
         # Substitution for move()
         child_nodes = nodedict[curr['node_id']]['neighbors'] | {curr['node_id']} 
-        child_nodes -= last_node(curr)
+        child_nodes -= last_node(curr,Reversing_Possible=Reversing_Possible)
         for child_node in child_nodes: 
             if is_constrained(curr['node_id'], child_node, curr['timestep'] + 0.5, constraint_table):
                 continue

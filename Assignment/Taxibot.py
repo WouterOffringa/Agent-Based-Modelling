@@ -78,7 +78,7 @@ class Taxibot(object):
             - edges_dict: edges_dict with current edge weights
         """
 
-        success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+        success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints, Reversing_Possible=True)
         #Make sure the path is broadcasted to some central location
 
         if success:
@@ -262,9 +262,13 @@ class Taxibot(object):
             
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
-                for node in set(conflicted_node).union(set(nodes_dict[conflicted_node[0]]['neighbors']), set(nodes_dict[conflicted_node[1]]['neighbors'])):
+                # print(self.id, set(conflicted_node).union(set([node for i in [0,1] for node in nodes_dict[conflicted_node[i]]['neighbors'] if nodes_dict[conflicted_node[i]]['type']=='between'])))
+                # for node in set(conflicted_node).union(set([node for i in [0,1] for node in nodes_dict[conflicted_node[i]]['neighbors'] if nodes_dict[conflicted_node[i]]['type']=='between'])):
+                for node in conflicted_node:
                     for tconfl in [conflict_time, conflict_time+.5, conflict_time+1.]:
+                    # tconfl = [conflpair for conflpair in self.path_to_goal if conflpair[0] == node][0][1]
                         self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
+                        # self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
 
             else:
                 self.constraints.append({'agent': self.id, 'node_id': conflicted_node, 'timestep': conflict_time, 'positive': False})
@@ -272,9 +276,7 @@ class Taxibot(object):
             self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
             return
-        return
-            
-
+        return 
 
         
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,

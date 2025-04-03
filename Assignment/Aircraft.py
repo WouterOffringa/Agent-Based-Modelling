@@ -253,8 +253,11 @@ class Aircraft(object):
             
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
-                for node in set(conflicted_node).union(set(nodes_dict[conflicted_node[0]]['neighbors']), set(nodes_dict[conflicted_node[1]]['neighbors'])):
+                # for node in set(conflicted_node).union(set([node for i in [0,1] for node in nodes_dict[conflicted_node[i]]['neighbors'] if nodes_dict[conflicted_node[i]]['type']=='between'])):
+
+                for node in conflicted_node:
                     for tconfl in [conflict_time, conflict_time+.5, conflict_time+1.]:
+                    # tconfl = [conflpair for conflpair in self.path_to_goal if conflpair[0] == node][0][1]
                         self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
 
             else:
@@ -333,7 +336,7 @@ class Aircraft(object):
 
         # print("Priority level of aircraft", self.id, "is", prioritylevel, "because delay is", self.delay, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])))
 
-        if movementoptions == 1:
+        if movementoptions <= 1:
             prioritylevel = 1000
 
         return prioritylevel
