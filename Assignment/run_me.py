@@ -211,58 +211,58 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    # spawning_time = 4
-    # if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
-    #     ac_type = random.choice(['A','D']) #randomly choose arrival or departure
-    #     if ac_type == 'D':
-    #         gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
-    #         available_gates = gates
-    #         for ac in aircraft_lst:
-    #             if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
-    #                 if ac.start in available_gates:
-    #                     available_gates.remove(ac.start)
-    #                 elif ac.from_to[0] in available_gates:
-    #                     available_gates.remove(ac.from_to[0])
-    #
-    #         print("Available gates for departure: ", available_gates)
-    #         if len(available_gates) > 0:
-    #             i += 1
-    #             dep_available = True
-    #             spawn_gate = random.choice(available_gates)
-    #             ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
-    #             ac.status = "holding"
-    #             aircraft_lst.append(ac)
-    #             agent_lst.append(ac)
-    #
-    #         else:
-    #             print("==No gates available for departure")
-    #             dep_available = False
-    #
-    #     else:
-    #         rwy_arr = [101, 102]
-    #         available_rwy = rwy_arr
-    #         for ac in aircraft_lst:
-    #             if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
-    #                 if ac.start in available_rwy:
-    #                     available_rwy.remove(ac.start)
-    #                 elif ac.from_to[0] in available_rwy:
-    #                     available_rwy.remove(ac.from_to[0])
-    #         print("Available runways for arrival: ", available_rwy)
-    #         if len(available_rwy) > 0:
-    #             i += 1
-    #             arrival_available = True
-    #             spawn_rwy = random.choice(available_rwy)
-    #             ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
-    #             ac.status = "holding"
-    #             aircraft_lst.append(ac)
-    #             agent_lst.append(ac)
-    #         else:
-    #             print("==No runways available for arrival")
-    #             arrival_available = False
+    spawning_time = 4
+    if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
+        ac_type = random.choice(['A','D']) #randomly choose arrival or departure
+        if ac_type == 'D':
+            gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
+            available_gates = gates
+            for ac in aircraft_lst:
+                if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
+                    if ac.start in available_gates:
+                        available_gates.remove(ac.start)
+                    elif ac.from_to[0] in available_gates:
+                        available_gates.remove(ac.from_to[0])
+
+            print("Available gates for departure: ", available_gates)
+            if len(available_gates) > 0:
+                i += 1
+                dep_available = True
+                spawn_gate = random.choice(available_gates)
+                ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
+                ac.status = "holding"
+                aircraft_lst.append(ac)
+                agent_lst.append(ac)
+
+            else:
+                print("==No gates available for departure")
+                dep_available = False
+
+        else:
+            rwy_arr = [101, 102]
+            available_rwy = rwy_arr
+            for ac in aircraft_lst:
+                if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
+                    if ac.start in available_rwy:
+                        available_rwy.remove(ac.start)
+                    elif ac.from_to[0] in available_rwy:
+                        available_rwy.remove(ac.from_to[0])
+            print("Available runways for arrival: ", available_rwy)
+            if len(available_rwy) > 0:
+                i += 1
+                arrival_available = True
+                spawn_rwy = random.choice(available_rwy)
+                ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
+                ac.status = "holding"
+                aircraft_lst.append(ac)
+                agent_lst.append(ac)
+            else:
+                print("==No runways available for arrival")
+                arrival_available = False
     # #
     #
     # ==== Fixed Spawning ====
-    spawning_time = 40
+    # spawning_time = 40
     # if (t-1) % spawning_time == 0:
     #     # case 1 - 4 aircraft which touch in the bottom right corner
     #     ac = Aircraft(1, 'A', 37,36,t, nodes_dict)
@@ -312,16 +312,16 @@ while running:
         # agent_lst.append(ac3)
 
 
-    if (t-1) % spawning_time == 10:
-        # case to check if taxibot creates collision with parked (holding) taxibot
-        ac4 = Aircraft(5, 'D', 98,96,t, nodes_dict)
-        ac4.status = "holding"
-        ac5 = Aircraft(6, 'D', 37,95,t, nodes_dict)
-        ac5.status = "holding"
-        agent_lst.append(ac4)
-        agent_lst.append(ac5)
-        aircraft_lst.append(ac4)
-        aircraft_lst.append(ac5)
+    # if (t-1) % spawning_time == 10:
+    #     # case to check if taxibot creates collision with parked (holding) taxibot
+    #     ac4 = Aircraft(5, 'D', 98,96,t, nodes_dict)
+    #     ac4.status = "holding"
+    #     ac5 = Aircraft(6, 'D', 37,95,t, nodes_dict)
+    #     ac5.status = "holding"
+    #     agent_lst.append(ac4)
+    #     agent_lst.append(ac5)
+    #     aircraft_lst.append(ac4)
+    #     aircraft_lst.append(ac5)
 
 
         constraints = []
