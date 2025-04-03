@@ -211,7 +211,7 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    spawning_time = 4
+    spawning_time = 5
     if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
         ac_type = random.choice(['A','D']) #randomly choose arrival or departure
         if ac_type == 'D':
@@ -262,7 +262,7 @@ while running:
     # #
     #
     # ==== Fixed Spawning ====
-    # spawning_time = 40
+    spawning_time = 40
     # if (t-1) % spawning_time == 0:
     #     # case 1 - 4 aircraft which touch in the bottom right corner
     #     ac = Aircraft(1, 'A', 37,36,t, nodes_dict)
@@ -312,19 +312,19 @@ while running:
         # agent_lst.append(ac3)
 
 
-    # if (t-1) % spawning_time == 10:
-    #     # case to check if taxibot creates collision with parked (holding) taxibot
-    #     ac4 = Aircraft(5, 'D', 98,96,t, nodes_dict)
-    #     ac4.status = "holding"
-    #     ac5 = Aircraft(6, 'D', 37,95,t, nodes_dict)
-    #     ac5.status = "holding"
-    #     agent_lst.append(ac4)
-    #     agent_lst.append(ac5)
-    #     aircraft_lst.append(ac4)
-    #     aircraft_lst.append(ac5)
+    if (t-1) % spawning_time == 10:
+        # case to check if taxibot creates collision with parked (holding) taxibot
+        ac4 = Aircraft(5, 'D', 98,96,t, nodes_dict)
+        ac4.status = "holding"
+        ac5 = Aircraft(6, 'D', 37,95,t, nodes_dict)
+        ac5.status = "holding"
+        agent_lst.append(ac4)
+        agent_lst.append(ac5)
+        aircraft_lst.append(ac4)
+        aircraft_lst.append(ac5)
 
 
-        constraints = []
+    #     constraints = []
     # if t == 25:
     #     aircraft_lst.clear()
         # this clears the aircraft list just for case 2
