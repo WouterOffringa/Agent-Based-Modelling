@@ -211,18 +211,23 @@ while running:
       
     #Spawn aircraft for this timestep (use for example a random process)
     # ==== Random Spawning ====
-    spawning_time = 5
+    spawning_time = 2
     if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
-        ac_type = random.choice(['A','D']) #randomly choose arrival or departure
+        ac_type = random.choice(['A','D','D']) #randomly choose arrival or departure
         if ac_type == 'D':
             gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
             available_gates = gates
             for ac in aircraft_lst:
-                if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
+                if ac.status == "holding" or ac.status == "pickup":
                     if ac.start in available_gates:
                         available_gates.remove(ac.start)
                     elif ac.from_to[0] in available_gates:
                         available_gates.remove(ac.from_to[0])
+                    elif ac.goal in available_gates:
+                        available_gates.remove(ac.goal)
+                elif ac.status == "taxiing": 
+                    if ac.goal in available_gates:
+                        available_gates.remove(ac.goal)
     
             print("Available gates for departure: ", available_gates)
             if len(available_gates) > 0:
@@ -242,7 +247,7 @@ while running:
             rwy_arr = [101, 102]
             available_rwy = rwy_arr
             for ac in aircraft_lst:
-                if ac.status == "holding" or ac.status == "pickup" and not (ac.status == "arrived" or ac.status == "taxiing"):
+                if ac.status == "holding" or ac.status == "pickup": # and not (ac.status == "arrived" or ac.status == "taxiing"):
                     if ac.start in available_rwy:
                         available_rwy.remove(ac.start)
                     elif ac.from_to[0] in available_rwy:
@@ -345,7 +350,7 @@ while running:
     if planner == "Independent":     
 
         if t % 0.5 == 0:
-            PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
+            # PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
             run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
