@@ -23,8 +23,8 @@ from PrioritySolver import PriorityDetector
 
 #%% SET SIMULATION PARAMETERS
 #Input file names (used in import_layout) -> Do not change those unless you want to specify a new layout.
-nodes_file = "nodes.xlsx" #xlsx file with for each node: id, x_pos, y_pos, type
-edges_file = "edges.xlsx" #xlsx file with for each edge: from  (node), to (node), length
+nodes_file = "nodes_v2.xlsx" #xlsx file with for each node: id, x_pos, y_pos, type
+edges_file = "edges_v2.xlsx" #xlsx file with for each edge: from  (node), to (node), length
 
 #Parameters that can be changed:
 simulation_time = 300
@@ -159,9 +159,12 @@ if visualization:
 gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
 # rwy_dep = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_d"]
 rwy_dep = [95, 96]
-# rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
-rwy_arr = [101, 102]
-tug_gates = [7, 9, 16, 23, 107]
+rwy_dep = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_d"]
+# rwy_dep = [95, 96]
+rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
+# rwy_arr = [101, 102]
+# tug_gates = [7, 9, 16, 23, 107]
+tug_gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "taxiparking"]
 
 # =============================================================================
 # 1. While loop and visualization
@@ -215,8 +218,8 @@ while running:
     if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
         ac_type = random.choice(['A','D','D']) #randomly choose arrival or departure
         if ac_type == 'D':
-            gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
-            available_gates = gates
+            # gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "gate"]
+            available_gates = gates.copy()
             for ac in aircraft_lst:
                 if ac.status == "holding" or ac.status == "pickup":
                     if ac.start in available_gates:
@@ -244,7 +247,8 @@ while running:
                 dep_available = False
     
         else:
-            rwy_arr = [101, 102]
+            # rwy_arr = [101, 102]
+            rwy_arr = [37,38]
             available_rwy = rwy_arr
             for ac in aircraft_lst:
                 if ac.status == "holding" or ac.status == "pickup": # and not (ac.status == "arrived" or ac.status == "taxiing"):
@@ -335,7 +339,8 @@ while running:
         # this clears the aircraft list just for case 2
     
     # ==== Spawning the taxibots ====
-    spawning_locations = [7, 9, 16, 23, 107]
+    # spawning_locations = [7, 9, 16, 23, 107]
+    spawning_locations = tug_gates
     alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     if t == 0:
         for i, location in enumerate(spawning_locations, start=1):
@@ -344,14 +349,14 @@ while running:
             agent_lst.append(tug)
             tug.idle = True
         constraints = []
-        run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+        run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1., t+1.5], constraints=constraints)
     
     #Do planning 
     if planner == "Independent":     
 
         if t % 0.5 == 0:
-            # PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
-            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+            PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
+            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1., t+1.5], constraints=constraints)
             run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
         # for ac in aircraft_lst:
@@ -369,13 +374,19 @@ while running:
                        
 
     #Move the aircraft that are taxiing
+    ac_remove = []
     for ac in aircraft_lst: 
         if ac.status == "taxiing": 
             ac.move(dt, t)
         if ac.status == "holding" and t % 0.5 == 0:
             ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
-        # if ac.status == "arrived":
-            # aircraft_lst.remove(ac)
+        if ac.status == "arrived":
+            ac_remove.append(ac)
+
+    #Remove aircraft that have arrived
+    for ac in ac_remove:
+        aircraft_lst.remove(ac)
+        agent_lst.remove(ac)
 
     #Move the taxibots that are taxiing
     for tug in tug_lst:

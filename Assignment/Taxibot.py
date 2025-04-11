@@ -151,7 +151,7 @@ class Taxibot(object):
         self.position = self.Goal_AC.position
         return
     
-    def Taxi_to_holding(self, t, edges_dict, heuristics):
+    def Taxi_to_holding(self, t, edges_dict, heuristics, agent_lst, horizon):
         # print("Im going home")
         self.goal_node = self.holding_location
         # self.start = self.from_to[0]
@@ -159,11 +159,13 @@ class Taxibot(object):
         self.plan_independent(self.nodes_dict, edges_dict, heuristics, t)
         #once it has planned a route, set the status to taxxiing
         # self.status = "taxiing, available"
+        self.conflict_detection(agent_lst, horizon, t, edges_dict, self.nodes_dict, heuristics)
         return
     
-    def Taxi_to_AC(self, t, edges_dict, heuristics):  
+    def Taxi_to_AC(self, t, edges_dict, heuristics, agent_lst, horizon):  
         self.plan_independent(self.nodes_dict, edges_dict, heuristics, t)
         # self.status = "taxiing, unavailable"
+        self.conflict_detection(agent_lst, horizon, t, edges_dict, self.nodes_dict, heuristics)
         return
 
     def broadcast_next_nodes(self, horizon):
@@ -213,18 +215,7 @@ class Taxibot(object):
                 other_nextsteps_d = [step if step != None else dummynode for step in other_nextsteps]
                 other_nextsteps_d.append(dummynode)
                 other_edges[agent] = [sorted((other_nextsteps_d[tau], other_nextsteps_d[tau+1])) for tau in range(horizon_length)]
-                # other_paths.append(other_nextsteps)
                 Agents_checked.append(agent)
-                    
-        #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
-        # for i in range(len(Aircrafts_checked)):
-        #     for tau in range(timehorizon):
-        #         if ac_nextsteps[tau] is not None and ac_nextsteps[tau] == other_paths[i][tau]:
-        #             Conflicted_aircraft = Aircrafts_checked[i]
-        #             Conflicted_node = ac_nextsteps[tau]
-        #             conflict_time = horizon_length[tau]
-        #             print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at ", Conflicted_node,". Now starting conflict resolution.")
-        #             #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
 
         for agent in Agents_checked:
             for tau in range(horizon_length):
@@ -233,16 +224,16 @@ class Taxibot(object):
                     Conflicted_node = own_nextsteps[tau]
                     conflict_time = horizon[tau]
                     # print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
-                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics)
+                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics, agent_lst, horizon)
 
                 if dummynode not in own_nextedges[tau] and own_nextedges[tau] == other_edges[agent][tau]:
                     Conflicted_agent = agent
                     Conflicted_edge = own_nextedges[tau]
                     conflict_time = horizon[tau]
                     # print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
-                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics)
+                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics, agent_lst, horizon)
 
-    def Conflict_resolution(self, conflicted_agent, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
+    def Conflict_resolution(self, conflicted_agent, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics, agent_lst, horizon):
         """
         Resolves the conflict between two aircrafts.
         """
@@ -250,7 +241,6 @@ class Taxibot(object):
         # TODO add conflict resolution for edge conflicts
 
         #find own priority level and that of the conflicted aircraft
-        # print("in conflict resultion of ", self.id)
         self_priority = self.determine_prioritylevel(t, edges_dict)
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
@@ -258,23 +248,18 @@ class Taxibot(object):
             print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
             
         if conflicted_priority > self_priority or self_priority == conflicted_priority:
-            # print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
-            
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
-                # print(self.id, set(conflicted_node).union(set([node for i in [0,1] for node in nodes_dict[conflicted_node[i]]['neighbors'] if nodes_dict[conflicted_node[i]]['type']=='between'])))
-                # for node in set(conflicted_node).union(set([node for i in [0,1] for node in nodes_dict[conflicted_node[i]]['neighbors'] if nodes_dict[conflicted_node[i]]['type']=='between'])):
                 for node in conflicted_node:
                     for tconfl in [conflict_time, conflict_time+.5, conflict_time+1.]:
-                    # tconfl = [conflpair for conflpair in self.path_to_goal if conflpair[0] == node][0][1]
                         self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
-                        # self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
 
             else:
                 self.constraints.append({'agent': self.id, 'node_id': conflicted_node, 'timestep': conflict_time, 'positive': False})
 
             self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
+            self.conflict_detection(agent_lst, horizon, t, edges_dict, nodes_dict, heuristics)
             return
         return 
 
@@ -284,6 +269,11 @@ class Taxibot(object):
                                             }):
         
         movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
+
+        if int(self.from_to[0]) in [95,96,
+                                    101,102,
+                                    99,92,93,94,100]:
+            movementoptions = 1
 
         prioritylevel = sum([
                             movementoptions * weights['movementoptions'],
