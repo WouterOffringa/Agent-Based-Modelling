@@ -259,7 +259,7 @@ while running:
             else:
                 print("==No runways available for arrival")
                 arrival_available = False
-    # #
+
     #
     # ==== Fixed Spawning ====
     spawning_time = 40
@@ -364,11 +364,14 @@ while running:
                        
 
     #Move the aircraft that are taxiing
-    for ac in aircraft_lst: 
+    for ac in aircraft_lst:
         if ac.status == "taxiing": 
             ac.move(dt, t)
         if ac.status == "holding" and t % 0.5 == 0:
             ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+        if ac.status == 'arrived':
+            ac.remove_from(aircraft_lst, agent_lst)
+            del ac  
         # if ac.status == "arrived":
             # aircraft_lst.remove(ac)
 

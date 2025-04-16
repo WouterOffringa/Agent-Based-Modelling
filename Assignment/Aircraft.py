@@ -338,6 +338,10 @@ class Aircraft(object):
 
         return prioritylevel
 
+    def remove_from(self, *lists):
+        for lst in lists:
+            if self in lst:
+                lst.remove(self)
 
 
 
