@@ -376,11 +376,17 @@ while running:
     #Move the aircraft that are taxiing
     ac_remove = []
     for ac in aircraft_lst: 
-        if ac.status == "taxiing": 
+        if ac.status == "taxiing":
             ac.move(dt, t)
         if ac.status == "holding" and t % 0.5 == 0:
             ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
         if ac.status == "arrived":
+            # print(ac.id,'has spawned at', ac.spawntime)
+            # print(ac.id, 'has started taxiing at', ac.departure_time)
+            # print(ac.id, 'so ac has waited', ac.delay)
+            # print(ac.id, 'ac ideally arived at', ac.ideal_arrival_time)
+            # print(ac.id, 'ac acturally arrived at', ac.arrival_time)
+            # print(ac.id, 'so ac was delayed while taxxiing for', ac.arrival_time-ac.ideal_arrival_time)
             ac_remove.append(ac)
 
     #Remove aircraft that have arrived

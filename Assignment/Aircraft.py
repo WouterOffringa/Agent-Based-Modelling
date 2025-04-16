@@ -36,7 +36,10 @@ class Aircraft(object):
         #State related
         self.heading = 0
         self.position = nodes_dict[self.start]["xy_pos"] #xy position on map
-        self.delay = None
+        self.delay = None               #This is the waiting on taxibot delay (t_taxibot,arrival - t_spawn)
+        self.departure_time = None      # Departure time
+        self.arrival_time = None        # Arrival time
+        self.ideal_arrival_time = None  # Fastest route arrival time
 
         #Replanning related
         self.last_node = None
@@ -108,7 +111,9 @@ class Aircraft(object):
             if self.position == self.nodes_dict[self.goal]["xy_pos"]: #if the final goal is reached
                 self.status = "arrived"
                 print("\nAircraft", self.id, "has arrived at its destination at t=", t)
-                
+                if self.arrival_time == None:
+                    self.arrival_time = np.ceil(t * 2) / 2  #rounds up to half a second always
+                    # print("arrival time is", self.arrival_time)
 
             else:  #current to_node is reached, update the remaining path
                 remaining_path = self.path_to_goal
@@ -148,6 +153,13 @@ class Aircraft(object):
                 next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
                 self.from_to = [path[0][0], next_node_id]
                 #print("Path AC", self.id, ":", path)
+                if self.departure_time == None:     # stores departure time for successful planed path
+                    self.departure_time = t
+                if self.ideal_arrival_time == None: # stores ideal arrival time for that path
+                    self.ideal_arrival_time = path[-1][1]
+                print(self.id, 'my path is', path)
+                # print('current time is', t, 'departure time is', self.departure_time)
+                # print('projected arrival_time is',self.ideal_arrival_time)
             else:
                 raise Exception("No solution found for", self.id)
             
@@ -315,11 +327,10 @@ class Aircraft(object):
             print("No available taxibots for aircraft", self.id, "at t=", t)
 
 
-    def track_delay(self, t):
+    def track_delay_waiting(self, t):       # Delay that shows waiting time until taxibot arrives
         if self.status == "taxiing" and self.delay == None:
             self.delay = t - self.spawntime
-            #print('Im delayed by', self.delay)
-            # print("Meine Mutter hat mir einfach erlaubt dass ich Cola trinken darf. Wie cool ist das bitte? Jetzt zuck ich Fortnite und trinke ich Cola. Yippieeeeeeee", self.delay)
+            # print(self.id,'Im delayed by', self.delay)
         return
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
