@@ -6,7 +6,7 @@ def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t,
     for ac in aircraft_lst:
         if ac.status == "planning":
             ac.status = "taxiing"
-            ac.track_delay(t)
+            ac.track_delay_waiting(t)
             ac.position = nodes_dict[ac.start]["xy_pos"]
             ac.plan_independent(nodes_dict, edges_dict, heuristics, t)
             # print("Aircraft", ac.id, "is taxiing, its next states are:", ac.path_to_goal)
