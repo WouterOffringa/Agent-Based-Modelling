@@ -222,18 +222,18 @@ class Aircraft(object):
                     Conflicted_node = own_nextsteps[tau]
                     conflict_time = horizon[tau]
                     # print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
-                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics)
+                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics, agent_lst, horizon)
 
                 if dummynode not in own_nextedges[tau] and own_nextedges[tau] == other_edges[agent][tau]:
                     Conflicted_agent = agent
                     Conflicted_edge = own_nextedges[tau]
                     conflict_time = horizon[tau]
                     # print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
-                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics)
+                    self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics, agent_lst, horizon)
 
 
 
-    def Conflict_resolution(self, conflicted_agent, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics):
+    def Conflict_resolution(self, conflicted_agent, t, edges_dict, nodes_dict, conflicted_node, conflict_time, heuristics, agent_lst, horizon):
         """
         Resolves the conflict between two aircrafts.
         """
@@ -253,8 +253,11 @@ class Aircraft(object):
             
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
-                for node in set(conflicted_node).union(set(nodes_dict[conflicted_node[0]]['neighbors']), set(nodes_dict[conflicted_node[1]]['neighbors'])):
+                # for node in set(conflicted_node).union(set([node for i in [0,1] for node in nodes_dict[conflicted_node[i]]['neighbors'] if nodes_dict[conflicted_node[i]]['type']=='between'])):
+
+                for node in conflicted_node:
                     for tconfl in [conflict_time, conflict_time+.5, conflict_time+1.]:
+                    # tconfl = [conflpair for conflpair in self.path_to_goal if conflpair[0] == node][0][1]
                         self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
 
             else:
@@ -262,6 +265,7 @@ class Aircraft(object):
 
             self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
+            self.conflict_detection(agent_lst, horizon, t, edges_dict, nodes_dict, heuristics)
             return
         return 
 
@@ -333,7 +337,7 @@ class Aircraft(object):
 
         # print("Priority level of aircraft", self.id, "is", prioritylevel, "because delay is", self.delay, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])))
 
-        if movementoptions == 1:
+        if movementoptions <= 1:
             prioritylevel = 1000
 
         return prioritylevel

@@ -15,7 +15,7 @@ def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t,
         #     aircraft_lst.remove(ac)
             
             
-def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t, constraints=[]):
+def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, horizon, constraints=[]):
     for tug in tugs_lst:
         # If the tug arrives at its goal node and its goal is to pick up an aircraft, it will start following the aircraft and acts as 1 agent
         if tug.status == "arrived" and tug.Goal_AC is not None:
@@ -29,7 +29,7 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
             tug.Hold_position(t, heuristics)
         # If the tug is called for, it will taxi to the aircraft
         if tug.status == "called by aircraft":
-            tug.Taxi_to_AC(t, edges_dict, heuristics)
+            tug.Taxi_to_AC(t, edges_dict, heuristics, agent_lst, horizon)
             # print("Tug", tug.id, "is taxiing to an aircraft") #, its next states are:", tug.path_to_goal)
             tug.status = "taxiing, unavailable"
         # If the tug is following an aircraft, it will follow the location of the aircraft
@@ -40,7 +40,7 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
 
         # If the aircraft arrives at the location, the tug will start holding position again
         if tug.Goal_AC is not None and tug.Goal_AC.status == "arrived":
-            tug.Taxi_to_holding(t, edges_dict, heuristics)
+            tug.Taxi_to_holding(t, edges_dict, heuristics, agent_lst, horizon)
             # print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
             tug.status = "taxiing, available"
             # tug.Goal_AC.status = "arrived"
