@@ -406,11 +406,11 @@ while simulating == True:
             ac_results = {"agent_id": ac.id,
                             "start": ac.start,
                             "goal": ac.goal,
-                            "arrival_time": 0,
-                            "departure_time": 0,
+                            "arrival_time": ac.arrival_time,
+                            "departure_time": ac.departure_time,
                             "waiting_time": ac.delay,
-                            "taxi_time": 0 - 0,
-                            "optimal taxi_time": 0}
+                            "taxi_time": ac.arrival_time - ac.departure_time,
+                            "optimal taxi_time": ac.ideal_arrival_time - ac.departure_time}
             sim_results.append(ac_results)
             
             aircraft_lst.remove(ac)
