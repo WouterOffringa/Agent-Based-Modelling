@@ -21,6 +21,7 @@ from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
 from datetime import datetime
+import gc # garbage collector
 # import matplotlib
 # matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
 # import matplotlib.pyplot as plt
@@ -162,6 +163,7 @@ if sensitivity == True:
         Number_of_sims = len(parameter_list)
 
 while simulating == True:
+    gc.collect() # garbage collector
     sim_results = []
 
     #Parameters that can be changed:
@@ -454,8 +456,10 @@ while simulating == True:
 
                 print("Max Entries per sim reached, restarting simulation")
                 running = False
-
+            
             t = t + dt
+            if t % 10 == 0:
+                gc.collect()
     except:
         UnsolvablePresent = True
     pg.quit()
