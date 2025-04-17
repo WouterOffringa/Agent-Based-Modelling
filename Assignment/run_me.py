@@ -171,7 +171,7 @@ while simulating == True:
     #Visualization (can also be changed)
     plot_graph = False                      # show graph representation in NetworkX
     visualization = True                    # pygame visualization
-    slow_factor = 1                         # 5 here means 5 times slower
+    slow_factor = 0.01                      # 5 here means 5 times slower
     visualization_speed = 0.1*slow_factor   # set at 0.1 as default
 
 
@@ -273,7 +273,7 @@ while simulating == True:
         
         #Spawn aircraft for this timestep (use for example a random process)
         # ==== Random Spawning ====
-        random_spawning = False
+        random_spawning = True
 
         if random_spawning:
             if sensitivity_spawning_time == True and sensitivity == True:
