@@ -24,7 +24,7 @@ from datetime import datetime
 
 #SET up the simulation tracker
 
-t_max = 40
+t_max = 100
 
 results_folder = "simulation_results"
 if not os.path.exists(results_folder):
@@ -32,11 +32,12 @@ if not os.path.exists(results_folder):
 
 columns_results = ["agent_id", "start", "goal", "arrival_time", "departure_time", "taxi_time", "optimal taxi_time", "waiting_time", "taxi_delay", "total_delay"]
 simulating = True
-Number_of_sims = 100 #This should be deleted and swithed to a coefficient of variation checker
+Minimum_sims = 100 
 sim_no = 1
 alfa = 0.05 #95% confidence interval
-l = 0.2 #length of the interval for the total delay
+l = 0.5 #length of the interval for the total delay
 z_value = 1.96 #fill in compared to alfa /2
+Entries_per_sim = 20 #number of entries per simulation
 mean_results = []
 Stdev_results = []
     
@@ -181,7 +182,7 @@ while simulating == True:
 
     aircraft_lst = []   #List which can contain aircraft agents
     tug_lst = []    #List which can contain tug agents  
-    agent_lst = []  #List which can contain all agents
+    agent_lst = []  #List which can contain all 
 
     if visualization:
         map_properties = map_initialization(nodes_dict, edges_dict) #visualization properties
@@ -237,7 +238,7 @@ while simulating == True:
         if random_spawning:
             spawning_time = 4
             if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
-                ac_type = random.choice(['A','D','D']) #randomly choose arrival or departure
+                ac_type = random.choice(['A','D']) #randomly choose arrival or departure
                 if ac_type == 'D':
                     available_gates = gates.copy()
                     for ac in aircraft_lst:
@@ -252,7 +253,7 @@ while simulating == True:
                             if ac.goal in available_gates:
                                 available_gates.remove(ac.goal)
             
-                    print("Available gates for departure: ", available_gates)
+                    #print("Available gates for departure: ", available_gates)
                     if len(available_gates) > 0:
                         i += 1
                         dep_available = True
@@ -275,7 +276,7 @@ while simulating == True:
                                 available_rwy.remove(ac.start)
                             elif ac.from_to[0] in available_rwy:
                                 available_rwy.remove(ac.from_to[0])
-                    print("Available runways for arrival: ", available_rwy)
+                    #print("Available runways for arrival: ", available_rwy)
                     if len(available_rwy) > 0:
                         i += 1
                         arrival_available = True
@@ -317,6 +318,12 @@ while simulating == True:
             constraints = []
             run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1., t+1.5], constraints=constraints)
         
+        #Requesting taxibots for ac
+
+        for ac in aircraft_lst:
+            if ac.status == "holding" and t % 0.5 == 0:
+                ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+
         #Do planning 
         if planner == "Independent":     
 
@@ -341,8 +348,6 @@ while simulating == True:
         for ac in aircraft_lst: 
             if ac.status == "taxiing": 
                 ac.move(dt, t)
-            if ac.status == "holding" and t % 0.5 == 0:
-                ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
             if ac.status == "arrived":
                 ac_remove.append(ac)
 
@@ -373,12 +378,12 @@ while simulating == True:
             if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
                 tug.move(dt, t)
 
-        if t == t_max:
+        if len(sim_results) > Entries_per_sim:
             #Save sim results to a file
             df = pd.DataFrame(sim_results, columns=columns_results)
             df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no}.csv"), index=False)
 
-            print("Maximum simulation time reached, restarting simulation")
+            print("Max Entries per sim reached, restarting simulation")
             running = False
             pg.quit()
 
@@ -391,6 +396,7 @@ while simulating == True:
         print("Mean result: ", Mean_result)
         mean_results.append(Mean_result)
         Stdev_results.append(Stdev_result)
+        bound = 100000 #set bound to a large number as initial (no solution yet)
     else:
         Mean_result_new = Mean_result + (df["total_delay"].mean() - Mean_result) / sim_no
         Stdev_result = ((1 - 1/(sim_no -1))*(Stdev_result**2) + (sim_no)*(Mean_result_new - Mean_result)**2)**(1/2)
@@ -403,17 +409,13 @@ while simulating == True:
         #Check if correct confidence is reached
         bound = 2 * z_value * Stdev_result / (sim_no**0.5)
         print("bound is: ", bound, "l is: ", l)	
-        if bound < l:
-            print("Confidence interval reached")
-            simulating = False
-            pg.quit()
-            break
-        
     
-    if sim_no >= Number_of_sims:
-        print(mean_results, Stdev_results)
+    if bound < l and sim_no > Minimum_sims:
+        print("Confidence interval reached")
         simulating = False
-        print("Simulation ended")
+        pg.quit()
+        break
+        
     sim_no = sim_no + 1    
     # =============================================================================
     # 2. Implement analysis of output data here

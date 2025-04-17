@@ -161,6 +161,7 @@ class Aircraft(object):
                 # print('current time is', t, 'departure time is', self.departure_time)
                 # print('projected arrival_time is',self.ideal_arrival_time)
             else:
+                                
                 raise Exception("No solution found for", self.id)
             
             #Check the path
@@ -228,6 +229,7 @@ class Aircraft(object):
                     
         
         for agent in Agents_checked:
+            own_nextsteps[0] = None #To avoid crashing the code at a collision, we set own current node to None
             for tau in range(horizon_length):
                 if own_nextsteps[tau] != None and own_nextsteps[tau] == other_paths[agent][tau]:
                     Conflicted_agent = agent
@@ -276,6 +278,7 @@ class Aircraft(object):
             self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
             self.conflict_detection(agent_lst, horizon, t, edges_dict, nodes_dict, heuristics)
+            self.constraints = [] #clear the constraints after replanning
             return
         return 
 

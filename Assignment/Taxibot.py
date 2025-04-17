@@ -251,6 +251,7 @@ class Taxibot(object):
                 Agents_checked.append(agent)
 
         for agent in Agents_checked:
+            own_nextsteps[0] = None #To avoid crashing the code at a collision, we set own current node to None
             for tau in range(horizon_length):
                 if own_nextsteps[tau] != None and own_nextsteps[tau] == other_paths[agent][tau]:
                     Conflicted_agent = agent
@@ -271,14 +272,13 @@ class Taxibot(object):
         Resolves the conflict between two aircrafts.
         """
 
-        # TODO add conflict resolution for edge conflicts
-
         #find own priority level and that of the conflicted aircraft
         self_priority = self.determine_prioritylevel(t, edges_dict)
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
         if self_priority > conflicted_priority:
-            print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            #print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            return
             
         if conflicted_priority > self_priority or self_priority == conflicted_priority:
             #Add constraint to the conflicted aircraft
@@ -293,6 +293,7 @@ class Taxibot(object):
             self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
             self.conflict_detection(agent_lst, horizon, t, edges_dict, nodes_dict, heuristics)
+            #self.constraints = [] #clear the constraints after they are used
             return
         return 
 
