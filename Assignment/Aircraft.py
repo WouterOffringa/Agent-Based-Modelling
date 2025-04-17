@@ -157,7 +157,7 @@ class Aircraft(object):
                     self.departure_time = t
                 if self.ideal_arrival_time == None: # stores ideal arrival time for that path
                     self.ideal_arrival_time = path[-1][1]
-                print(self.id, 'my path is', path)
+                # print(self.id, 'my path is', path)
                 # print('current time is', t, 'departure time is', self.departure_time)
                 # print('projected arrival_time is',self.ideal_arrival_time)
             else:

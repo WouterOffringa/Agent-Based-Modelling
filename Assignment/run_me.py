@@ -21,10 +21,14 @@ from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
 from datetime import datetime
+import matplotlib
+matplotlib.use('TkAgg')  # Sorry sorry comment dit als het error geeft, deze moet voor mij anders werkt ie niet - lynn
+import matplotlib.pyplot as plt
+from itertools import product
 
 #SET up the simulation tracker
 
-t_max = 50
+t_max = 15
 
 results_folder = "simulation_results"
 if not os.path.exists(results_folder):
@@ -34,6 +38,42 @@ columns_results = ["agent_id", "start", "goal", "arrival_time", "departure_time"
 simulating = True
 Number_of_sims = 3 #This should be deleted and swithed to a coefficient of variation checker
 sim_no = 1
+
+## Set up sensitivity analysis
+sensitivity = True        # Set to true if want to do sensitivity
+local = False
+
+#For local sensitivity determine what parameters to do sensitivity on
+sensitivity_nr_taxibots = True
+sensitivity_spawning_time = True
+
+#determine initial values and sensitivity:
+p_taxibots = 4
+dp_taxibots = 1
+
+p_spawning_time = 4
+dp_spawning_time = 2 ## can alter later!
+
+
+if sensitivity == True:
+    p_taxibots_list = [p_taxibots - dp_taxibots, p_taxibots, p_taxibots + dp_taxibots]
+    p_spawntime_list = [p_spawning_time - dp_spawning_time, p_spawning_time, p_spawning_time + dp_spawning_time]
+
+    if local == True:
+        if sensitivity_nr_taxibots == True:
+            parameter_list = p_taxibots_list
+        if sensitivity_spawning_time == True:
+            parameter_list = p_spawntime_list
+        Number_of_sims = len(parameter_list)
+        if Number_of_sims != 3:
+            print('I should be doing local sensitivity, but I am doing', Number_of_sims,'simulations, which is wrong!')
+    if local == False:
+        parameter_list = []
+        for taxi in p_taxibots_list:
+            for time in p_spawntime_list:
+                parameter_list.append({'taxibots': taxi, 'spawning_time': time})
+        Number_of_sims = len(parameter_list)
+
 
 while simulating == True:
     sim_results = []
@@ -231,7 +271,14 @@ while simulating == True:
         
         #Spawn aircraft for this timestep (use for example a random process)
         # ==== Random Spawning ====
-        spawning_time = 4
+        if sensitivity_spawning_time == True and sensitivity == True:
+            if local == True:
+                spawning_time = parameter_list[sim_no - 1]    # sim_no-1 to make the current simulation match with index
+            if local == False:
+                spawning_time = parameter_list[sim_no - 1]['spawning_time']
+        if sensitivity == False or sensitivity_spawning_time == False:
+            spawning_time = 4
+
         if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
             ac_type = random.choice(['A','D','D']) #randomly choose arrival or departure
             if ac_type == 'D':
@@ -288,7 +335,7 @@ while simulating == True:
         # #
         #
         # ==== Fixed Spawning ====
-        spawning_time = 40
+        # spawning_time = 40
         # if (t-1) % spawning_time == 0:
         #     # case 1 - 4 aircraft which touch in the bottom right corner
         #     ac = Aircraft(1, 'A', 37,36,t, nodes_dict)
@@ -358,8 +405,19 @@ while simulating == True:
         # ==== Spawning the taxibots ====
         # spawning_locations = [7, 9, 16, 23, 107]
         spawning_locations = tug_gates
+
+        if sensitivity_nr_taxibots == True and sensitivity == True:
+            if local == True:
+                nr_taxibots = parameter_list[sim_no - 1]    # to make sim_no correspond with index
+            if local == False:
+                nr_taxibots = parameter_list[sim_no - 1]['taxibots']
+        if sensitivity == False or sensitivity_nr_taxibots == False:
+            nr_taxibots = 5
+        amount_deleted_taxibots = 5 - nr_taxibots
+        spawning_locations = spawning_locations[amount_deleted_taxibots:]
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         if t == 0:
+            print('spawning locations are', spawning_locations)
             for i, location in enumerate(spawning_locations, start=1):
                 tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
                 tug_lst.append(tug)
@@ -439,4 +497,32 @@ while simulating == True:
     # =============================================================================
     # 2. Implement analysis of output data here
     # =============================================================================
-    #what data do you want to show?
+
+### Need to make this compatible with what I made for sensitivity at the beginning of run_me
+
+#sim_results is a list of ac_results. Each AC_result is a dictionary
+# get three times simulation results (one sim_results for every simulation)
+X_minus = 1     ## need to fill in, but is simulation output for p-dp
+X = 2           ## need to fill in, but is simulation output for p
+X_plus = 3      ## need to fill in, but is simulation output for p+dp
+X_list = [X_minus, X, X_plus]
+
+#sensitivity parameter for current simulation
+S_plus = (X_plus - X) / (dp/p)
+S_minus = (X - X_minus) / (dp/p)
+print('the S plus parameter is', S_plus)
+print("the S minus parameter is", S_minus)
+
+# # Plot sensitivity of output for the parameter on which sensitivity was performed
+# # Note: only for one parameter at the time!!!
+# plt.figure(figsize=(8, 5))
+# plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+#
+# plt.xlabel("Parameters")
+# plt.ylabel("X values")
+# plt.title("X vs Parameters")
+#
+# # Optional: grid and tight layout
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()
