@@ -157,7 +157,7 @@ class Aircraft(object):
                     self.departure_time = t
                 if self.ideal_arrival_time == None: # stores ideal arrival time for that path
                     self.ideal_arrival_time = path[-1][1]
-                # print(self.id, 'my path is', path)
+                #print(self.id, 'my path is', path)
                 # print('current time is', t, 'departure time is', self.departure_time)
                 # print('projected arrival_time is',self.ideal_arrival_time)
             else:
@@ -258,7 +258,8 @@ class Aircraft(object):
         conflicted_priority = conflicted_agent.determine_prioritylevel(t, edges_dict)
 
         if self_priority > conflicted_priority:
-            print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            # print("__________Priority of", self.id, "is higher than", conflicted_agent.id, ". No action needed.")
+            return
             
         if conflicted_priority > self_priority or self_priority == conflicted_priority:
             # print("__________Priority of", self.id, "is lower than", conflicted_agent.id, ". Will replan.")
@@ -316,12 +317,13 @@ class Aircraft(object):
             winning_tug.goal_node = self.start
             winning_tug.Goal_AC = self
             self.status = "pickup"
-            print("Taxibot", winning_tug.id, "is called by aircraft", self.id, "at t=", t,)
+            #print("Taxibot", winning_tug.id, "is called by aircraft", self.id, "at t=", t,)
         
             #TODO Should still add that this travel_time is looked at, and lowest is the taxibot that will be assigned
 
         else:
-            print("No available taxibots for aircraft", self.id, "at t=", t)
+            #print("No available taxibots for aircraft", self.id, "at t=", t)
+            return
 
 
     def track_delay_waiting(self, t):       # Delay that shows waiting time until taxibot arrives
