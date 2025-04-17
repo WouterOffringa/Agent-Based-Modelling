@@ -39,6 +39,10 @@ class Taxibot(object):
         self.goal = self.goal_node
         self.delay = 0 #TODO: Create delay logic
 
+        #Replanning related
+        self.last_node = None
+        self.replan = False
+
     def get_heading(self, xy_start, xy_next):
         """
         Determines heading of an aircraft based on a start and end xy position.
@@ -77,8 +81,31 @@ class Taxibot(object):
             - nodes_dict: copy of the nodes_dict
             - edges_dict: edges_dict with current edge weights
         """
-
+        """
         success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], self.goal_node, heuristics, self.id, current_time=t, constraints=self.constraints, Reversing_Possible=True)
+        #Make sure the path is broadcasted to some central location
+
+        if success:
+            self.path_to_goal = path[1:]
+            next_node_id = self.path_to_goal[0][0] #next node is first node in path_to_goal
+            self.from_to = [path[0][0], next_node_id]
+            #print("Path AC", self.id, ":", path)
+        else:
+            raise Exception("No solution found for", self.id)
+        
+        #Check the path
+        if path[0][1] != t:
+            raise Exception("Something is wrong with the timing of the path planning")
+        """
+        start_node = self.from_to[0] #node from which planning should be done
+        goal_node = self.goal_node #node to which planning should be done
+            
+        if self.replan == False:
+            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+        if self.replan == True:
+            # print("______________Replanning for", self.id, "with", len(self.constraints), "constraints:", self.constraints)
+            success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+            self.replan = False
         #Make sure the path is broadcasted to some central location
 
         if success:
@@ -174,15 +201,21 @@ class Taxibot(object):
         """
 
         ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon]
+        extra_steps = {95.0: 4.0, 96.0: 5.0, 92.0: 30.0, 93.0: 31.0, 94.0: 32.0, 99.0: 29.0, 100.0: 33.0}
 
         #append the current node in the beginning of ac_nextsteps
         ac_nextsteps.insert(0, self.from_to[0])
         
         if len(ac_nextsteps) == 3:
-            ac_nextsteps.append(None)
+            ac_nextsteps.append(ac_nextsteps[1])
+
         if len(ac_nextsteps) == 2:
-            ac_nextsteps.append(None)
-            ac_nextsteps.append(None)
+            ac_nextsteps.append(ac_nextsteps[0])
+            if extra_steps.get(ac_nextsteps[0]) != None:
+                ac_nextsteps.append(extra_steps[ac_nextsteps[0]])
+            else:
+                ac_nextsteps.append(None)
+                
         if len(ac_nextsteps) == 1:
             ac_nextsteps.append(None)
             ac_nextsteps.append(None)
@@ -192,7 +225,7 @@ class Taxibot(object):
 
     def conflict_detection(self, agent_lst, horizon, t, edges_dict,nodes_dict, heuristics):
         """
-        Detects if there is a conflict between two aircraft.
+        Detects if there is a conflict between two agents.
         """
         #Define own next 3 steps and request the next 3 steps of all other aircrafts that are taxxiing
         horizon_length = len(horizon)
@@ -271,6 +304,8 @@ class Taxibot(object):
         movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
 
         if int(self.from_to[0]) in [95,96,
+                                    101,102,
+                                    99,92,93,94,100] or int(self.from_to[1]) in [95,96,
                                     101,102,
                                     99,92,93,94,100]:
             movementoptions = 1

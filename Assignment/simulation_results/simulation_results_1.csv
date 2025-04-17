@@ -1,2 +1,5 @@
 agent_id,start,goal,arrival_time,departure_time,waiting_time,taxi_time,optimal taxi_time
+<<<<<<< HEAD
 3,38,35,14.0,8.0,7.0,6.0,6.0
+=======
+>>>>>>> 38eadb14ae72677d9c7cf973ed711c2048b43629
