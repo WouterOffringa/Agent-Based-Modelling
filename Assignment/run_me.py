@@ -39,64 +39,45 @@ l = 0.2 #length of the interval for the total delay
 z_value = 1.96 #fill in compared to alfa /2
 mean_results = []
 Stdev_results = []
-
-while simulating == True:
-    sim_results = []
-
-    #%% SET SIMULATION PARAMETERS
-    #Input file names (used in import_layout) -> Do not change those unless you want to specify a new layout.
-    nodes_file = "nodes_v2.xlsx" #xlsx file with for each node: id, x_pos, y_pos, type
-    edges_file = "edges_v2.xlsx" #xlsx file with for each edge: from  (node), to (node), length
-
-    #Parameters that can be changed:
-    simulation_time = 300
-    planner = "Independent" #choose which planner to use (currently only Independent is implemented)
-
-    #Visualization (can also be changed)
-    plot_graph = False                      # show graph representation in NetworkX
-    visualization = True                    # pygame visualization
-    slow_factor = 1                         # 5 here means 5 times slower
-    visualization_speed = 0.1*slow_factor   # set at 0.1 as default
-
-    #%%Function definitions
-    def import_layout(nodes_file, edges_file):
-        """
-        Imports layout information from xlsx files and converts this into dictionaries.
-        INPUT:
-            - nodes_file = xlsx file with node input data
-            - edges_file = xlsx file with edge input data
-        RETURNS:
-            - nodes_dict = dictionary with nodes and node properties
-            - edges_dict = dictionary with edges annd edge properties
-            - start_and_goal_locations = dictionary with node ids for arrival runways, departure runways and gates 
-        """
-        gates_xy = []   #lst with (x,y) positions of gates
-        rwy_dep_xy = [] #lst with (x,y) positions of entry points of departure runways
-        rwy_arr_xy = [] #lst with (x,y) positions of exit points of arrival runways
+    
+def import_layout(nodes_file, edges_file):
+    """
+    Imports layout information from xlsx files and converts this into dictionaries.
+    INPUT:
+        - nodes_file = xlsx file with node input data
+        - edges_file = xlsx file with edge input data
+    RETURNS:
+        - nodes_dict = dictionary with nodes and node properties
+        - edges_dict = dictionary with edges annd edge properties
+        - start_and_goal_locations = dictionary with node ids for arrival runways, departure runways and gates 
+    """
+    gates_xy = []   #lst with (x,y) positions of gates
+    rwy_dep_xy = [] #lst with (x,y) positions of entry points of departure runways
+    rwy_arr_xy = [] #lst with (x,y) positions of exit points of arrival runways
+    
+    df_nodes = pd.read_excel(os.getcwd() + "/" + nodes_file)
+    df_edges = pd.read_excel(os.getcwd() + "/" + edges_file)
+    
+    #Create nodes_dict from df_nodes
+    nodes_dict = {}
+    for i, row in df_nodes.iterrows():
+        node_properties = {"id": row["id"],
+                        "x_pos": row["x_pos"],
+                        "y_pos": row["y_pos"],
+                        "xy_pos": (row["x_pos"],row["y_pos"]),
+                        "type": row["type"],
+                        "neighbors": set()
+                        }
+        node_id = row["id"]
+        nodes_dict[node_id] = node_properties
         
-        df_nodes = pd.read_excel(os.getcwd() + "/" + nodes_file)
-        df_edges = pd.read_excel(os.getcwd() + "/" + edges_file)
-        
-        #Create nodes_dict from df_nodes
-        nodes_dict = {}
-        for i, row in df_nodes.iterrows():
-            node_properties = {"id": row["id"],
-                            "x_pos": row["x_pos"],
-                            "y_pos": row["y_pos"],
-                            "xy_pos": (row["x_pos"],row["y_pos"]),
-                            "type": row["type"],
-                            "neighbors": set()
-                            }
-            node_id = row["id"]
-            nodes_dict[node_id] = node_properties
-            
-            #Add node type
-            if row["type"] == "rwy_d":
-                rwy_dep_xy.append((row["x_pos"],row["y_pos"]))
-            elif row["type"] == "rwy_a":
-                rwy_arr_xy.append((row["x_pos"],row["y_pos"]))
-            elif row["type"] == "gate":
-                gates_xy.append((row["x_pos"],row["y_pos"]))
+        #Add node type
+        if row["type"] == "rwy_d":
+            rwy_dep_xy.append((row["x_pos"],row["y_pos"]))
+        elif row["type"] == "rwy_a":
+            rwy_arr_xy.append((row["x_pos"],row["y_pos"]))
+        elif row["type"] == "gate":
+            gates_xy.append((row["x_pos"],row["y_pos"]))
 
     #Specify node ids of gates, departure runways and arrival runways in a dict
     start_and_goal_locations = {"gates": gates_xy, 
@@ -127,6 +108,7 @@ while simulating == True:
     
     return nodes_dict, edges_dict, start_and_goal_locations
 
+
 ### Define global variables
 
 nodes_file = "nodes_v2.xlsx" #xlsx file with for each node: id, x_pos, y_pos, type
@@ -139,17 +121,6 @@ rwy_dep = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_d"]
 rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
 tug_gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "taxiparking"]
 
-### Set up simulation tracker
-
-results_folder = "simulation_results"
-if not os.path.exists(results_folder):
-    os.makedirs(results_folder)
-
-columns_results = ["agent_id", "start", "goal", "arrival_time", "departure_time", "waiting_time", "taxi_time","optimal taxi_time"]
-simulating = True
-Number_of_sims = 2 #This should be deleted and swithed to a coefficient of variation checker
-sim_no = 1
-t_max = 50
 
 while simulating == True:
     sim_results = []
