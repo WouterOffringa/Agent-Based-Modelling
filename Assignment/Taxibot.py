@@ -21,7 +21,7 @@ class Taxibot(object):
         self.holding_location = holding_location    #holding_location_node_id
         self.nodes_dict = nodes_dict                #keep copy of nodes dict
         self.status = "available"                   #begin status
-        self.planning_status = None            #ensure we dont plan when we are taxxiing already
+        #self.planning_status = None                 #ensure we dont plan when we are taxxiing already
         self.idle = True                            #If idling, to keep aircraft on the map without a driving plan
         self.Goal_AC = None
 

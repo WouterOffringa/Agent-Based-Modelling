@@ -127,7 +127,7 @@ tug_gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "taxipar
 
 
 ## Start sensitivity analysis
-sensitivity = True        # Set to true if want to do sensitivity
+sensitivity = False        # Set to true if want to do sensitivity
 local = True
 
 #For local sensitivity determine what parameters to do sensitivity on
