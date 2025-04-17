@@ -24,16 +24,21 @@ from datetime import datetime
 
 #SET up the simulation tracker
 
-t_max = 50
+t_max = 40
 
 results_folder = "simulation_results"
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
-columns_results = ["agent_id", "start", "goal", "arrival_time", "departure_time", "waiting_time", "taxi_time","optimal taxi_time"]
+columns_results = ["agent_id", "start", "goal", "arrival_time", "departure_time", "taxi_time", "optimal taxi_time", "waiting_time", "taxi_delay", "total_delay"]
 simulating = True
-Number_of_sims = 3 #This should be deleted and swithed to a coefficient of variation checker
+Number_of_sims = 100 #This should be deleted and swithed to a coefficient of variation checker
 sim_no = 1
+alfa = 0.05 #95% confidence interval
+l = 0.2 #length of the interval for the total delay
+z_value = 1.96 #fill in compared to alfa /2
+mean_results = []
+Stdev_results = []
 
 while simulating == True:
     sim_results = []
@@ -249,7 +254,7 @@ while simulating == True:
                         if ac.goal in available_gates:
                             available_gates.remove(ac.goal)
         
-                print("Available gates for departure: ", available_gates)
+                #print("Available gates for departure: ", available_gates)
                 if len(available_gates) > 0:
                     i += 1
                     dep_available = True
@@ -273,7 +278,7 @@ while simulating == True:
                             available_rwy.remove(ac.start)
                         elif ac.from_to[0] in available_rwy:
                             available_rwy.remove(ac.from_to[0])
-                print("Available runways for arrival: ", available_rwy)
+                #print("Available runways for arrival: ", available_rwy)
                 if len(available_rwy) > 0:
                     i += 1
                     arrival_available = True
@@ -403,14 +408,20 @@ while simulating == True:
         #Remove aircraft that have arrived ans save results
         for ac in ac_remove:
             #Track all the data of the aircraft
+            taxi_time = ac.arrival_time - ac.departure_time
+            optimal_taxi_time = ac.ideal_arrival_time - ac.departure_time
+            taxi_delay = taxi_time - optimal_taxi_time
+
             ac_results = {"agent_id": ac.id,
                             "start": ac.start,
                             "goal": ac.goal,
                             "arrival_time": ac.arrival_time,
                             "departure_time": ac.departure_time,
+                            "taxi_time": taxi_time,
+                            "optimal taxi_time": optimal_taxi_time,
                             "waiting_time": ac.delay,
-                            "taxi_time": ac.arrival_time - ac.departure_time,
-                            "optimal taxi_time": ac.ideal_arrival_time - ac.departure_time}
+                            "taxi_delay": taxi_delay,
+                            "total_delay": (taxi_delay + ac.delay)}     
             sim_results.append(ac_results)
             
             aircraft_lst.remove(ac)
@@ -432,7 +443,34 @@ while simulating == True:
 
         t = t + dt
 
+    #Calculate mean and std of results, update
+    if sim_no == 1:
+        Mean_result = df["total_delay"].mean()
+        Stdev_result = 0
+        print("Mean result: ", Mean_result)
+        mean_results.append(Mean_result)
+        Stdev_results.append(Stdev_result)
+    else:
+        Mean_result_new = Mean_result + (df["total_delay"].mean() - Mean_result) / sim_no
+        Stdev_result = ((1 - 1/(sim_no -1))*(Stdev_result**2) + (sim_no)*(Mean_result_new - Mean_result)**2)**(1/2)
+        Mean_result = Mean_result_new
+        print("Mean result: ", Mean_result)
+        print("Stdev result: ", Stdev_result)
+        mean_results.append(Mean_result)
+        Stdev_results.append(Stdev_result)
+
+        #Check if correct confidence is reached
+        bound = 2 * z_value * Stdev_result / (sim_no**0.5)
+        print("bound is: ", bound, "l is: ", l)	
+        if bound < l:
+            print("Confidence interval reached")
+            simulating = False
+            pg.quit()
+            break
+        
+    
     if sim_no >= Number_of_sims:
+        print(mean_results, Stdev_results)
         simulating = False
         print("Simulation ended")
     sim_no = sim_no + 1    
