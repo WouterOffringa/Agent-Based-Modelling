@@ -21,6 +21,9 @@ from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
 from datetime import datetime
+# import matplotlib
+# matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
+# import matplotlib.pyplot as plt
 
 ### Define functions
 
@@ -118,11 +121,11 @@ t_max = 50
 
 ## Start sensitivity analysis
 sensitivity = True        # Set to true if want to do sensitivity
-local = False
+local = True
 
 #For local sensitivity determine what parameters to do sensitivity on
 sensitivity_nr_taxibots = True
-sensitivity_spawning_time = True
+sensitivity_spawning_time = False
 
 #determine initial values and sensitivity:
 p_taxibots = 4
@@ -268,12 +271,12 @@ while simulating == True:
         if random_spawning:
             if sensitivity_spawning_time == True and sensitivity == True:
                 if local == True:
-                    spawning_time = parameter_list[
-                        sim_no - 1]  # sim_no-1 to make the current simulation match with index
+                    spawning_time = parameter_list[sim_no - 1]  # sim_no-1 to make the current simulation match with index
                 if local == False:
                     spawning_time = parameter_list[sim_no - 1]['spawning_time']
             if sensitivity == False or sensitivity_spawning_time == False:
-                spawning_time = 4
+                spawning_time = 4       # This is the default for when no sensitivity is done
+
             if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
                 ac_type = random.choice(['A','D','D']) #randomly choose arrival or departure
                 if ac_type == 'D':
@@ -437,29 +440,54 @@ while simulating == True:
 
 ### Need to make this compatible with what I made for sensitivity at the beginning of run_me
 
-#sim_results is a list of ac_results. Each AC_result is a dictionary
-# get three times simulation results (one sim_results for every simulation)
-X_minus = 1     ## need to fill in, but is simulation output for p-dp
-X = 2           ## need to fill in, but is simulation output for p
-X_plus = 3      ## need to fill in, but is simulation output for p+dp
-X_list = [X_minus, X, X_plus]
+## Local sensitivity analysis results
+if local == True:
+    X_minus = sim_results[0]["waiting_time"]    ## need to fill in, but is simulation output for p-dp
+    X = sim_results[1]["waiting_time"]           ## need to fill in, but is simulation output for p
+    X_plus = sim_results[2]["waiting_time"]     ## need to fill in, but is simulation output for p+dp
+    X_list = [X_minus, X, X_plus]
 
-#sensitivity parameter for current simulation
-S_plus = (X_plus - X) / (dp/p)
-S_minus = (X - X_minus) / (dp/p)
-print('the S plus parameter is', S_plus)
-print("the S minus parameter is", S_minus)
+    if sensitivity_nr_taxibots == True:
+        p = p_taxibots
+        dp = dp_taxibots
+        S_plus = (X_plus - X) / (dp / p)
+        S_minus = (X - X_minus) / (dp / p)
+        print('the S plus parameter is', S_plus)
+        print("the S minus parameter is", S_minus)
 
-# # Plot sensitivity of output for the parameter on which sensitivity was performed
-# # Note: only for one parameter at the time!!!
-# plt.figure(figsize=(8, 5))
-# plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
-#
-# plt.xlabel("Parameters")
-# plt.ylabel("X values")
-# plt.title("X vs Parameters")
-#
-# # Optional: grid and tight layout
-# plt.grid(True)
-# plt.tight_layout()
-# plt.show()
+        ## plot local sensitivity for taxibots
+        plt.figure(figsize=(8, 5))
+        plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+
+        plt.xlabel("Number of taxibots")
+        plt.ylabel("Delay")
+        plt.title("Delay vs Number of Taxibots")
+
+        # Optional: grid and tight layout
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+
+    if sensitivity_spawning_time == True:
+        p = p_spawning_time
+        dp = dp_spawning_time
+        S_plus = (X_plus - X) / (dp/p)
+        S_minus = (X - X_minus) / (dp/p)
+        print('the S plus parameter is', S_plus)
+        print("the S minus parameter is", S_minus)
+
+        ## plot local sensitivity for taxibots
+        plt.figure(figsize=(8, 5))
+        plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+
+        plt.xlabel("Spawning time")
+        plt.ylabel("Delay")
+        plt.title("Delay vs Spawning Time")
+
+        # Optional: grid and tight layout
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+# if local == False:
