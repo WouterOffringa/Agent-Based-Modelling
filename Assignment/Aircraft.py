@@ -173,25 +173,34 @@ class Aircraft(object):
         """
 
         ac_nextsteps = [step[0] for step in self.path_to_goal if step[1] in horizon]
+        extra_steps = {95.0: 4.0, 96.0: 5.0, 92.0: 30.0, 93.0: 31.0, 94.0: 32.0, 99.0: 29.0, 100.0: 33.0}
+
 
         #append the current node in the beginning of ac_nextsteps
         ac_nextsteps.insert(0, self.from_to[0])
         
         if len(ac_nextsteps) == 3:
-            ac_nextsteps.append(None)
+            ac_nextsteps.append(ac_nextsteps[1])
+
         if len(ac_nextsteps) == 2:
-            ac_nextsteps.append(None)
-            ac_nextsteps.append(None)
+            ac_nextsteps.append(ac_nextsteps[0])
+            if extra_steps.get(ac_nextsteps[0]) != None:
+                ac_nextsteps.append(extra_steps[ac_nextsteps[0]])
+            else:
+                ac_nextsteps.append(None)
+
         if len(ac_nextsteps) == 1:
             ac_nextsteps.append(None)
             ac_nextsteps.append(None)
             ac_nextsteps.append(None)
 
+
+
         return ac_nextsteps
 
     def conflict_detection(self, agent_lst, horizon, t, edges_dict,nodes_dict, heuristics):
         """
-        Detects if there is a conflict between two aircraft.
+        Detects if there is a conflict between two agents.
         """
         #Define own next 3 steps and request the next 3 steps of all other aircrafts that are taxxiing
         horizon_length = len(horizon)
@@ -217,16 +226,7 @@ class Aircraft(object):
                 # other_paths.append(other_nextsteps)
                 Agents_checked.append(agent)
                     
-        #Check if there is a conflict, #TODO: currently only node based, not passing on other nodes based on heading
-        # for i in range(len(Aircrafts_checked)):
-        #     for tau in range(timehorizon):
-        #         if ac_nextsteps[tau] is not None and ac_nextsteps[tau] == other_paths[i][tau]:
-        #             Conflicted_aircraft = Aircrafts_checked[i]
-        #             Conflicted_node = ac_nextsteps[tau]
-        #             conflict_time = horizon_length[tau]
-        #             print("______________Conflict detected between", self.id, "and", Aircrafts_checked[i].id, " at ", Conflicted_node,". Now starting conflict resolution.")
-        #             #self.Conflict_resolution(Conflicted_aircraft, t, edges_dict, nodes_dict, Conflicted_node, conflict_time, heuristics)
-
+        
         for agent in Agents_checked:
             for tau in range(horizon_length):
                 if own_nextsteps[tau] != None and own_nextsteps[tau] == other_paths[agent][tau]:
@@ -266,11 +266,8 @@ class Aircraft(object):
             
             #Add constraint to the conflicted aircraft
             if len(conflicted_node) > 1:
-                # for node in set(conflicted_node).union(set([node for i in [0,1] for node in nodes_dict[conflicted_node[i]]['neighbors'] if nodes_dict[conflicted_node[i]]['type']=='between'])):
-
                 for node in conflicted_node:
                     for tconfl in [conflict_time, conflict_time+.5, conflict_time+1.]:
-                    # tconfl = [conflpair for conflpair in self.path_to_goal if conflpair[0] == node][0][1]
                         self.constraints.append({'agent': self.id, 'node_id': [node], 'timestep': tconfl, 'positive': False})
 
             else:
@@ -341,6 +338,13 @@ class Aircraft(object):
                                             }):
         
         movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
+
+        if int(self.from_to[0]) in [95,96,
+                                    101,102,
+                                    99,92,93,94,100] or int(self.from_to[1]) in [95,96,
+                                    101,102,
+                                    99,92,93,94,100]:
+            movementoptions = 1
 
         prioritylevel = sum([
                             self.delay * weights['delay'], 
