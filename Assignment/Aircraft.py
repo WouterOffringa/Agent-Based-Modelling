@@ -235,14 +235,14 @@ class Aircraft(object):
                     Conflicted_agent = agent
                     Conflicted_node = own_nextsteps[tau]
                     conflict_time = horizon[tau]
-                    # print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
+                    print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node), "at time", conflict_time  ,". Now (t=", t, ") starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics, agent_lst, horizon)
 
                 if dummynode not in own_nextedges[tau] and own_nextedges[tau] == other_edges[agent][tau]:
                     Conflicted_agent = agent
                     Conflicted_edge = own_nextedges[tau]
                     conflict_time = horizon[tau]
-                    # print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
+                    print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics, agent_lst, horizon)
 
 
@@ -336,29 +336,28 @@ class Aircraft(object):
         return
 
     def determine_prioritylevel(self, t, edges_dict, weights = {'routelength': -1,
-                                            'delay': 3,
                                             'movementoptions': -1,
                                             }):
         
+        dead_ends = [1,2,34,35,36,92,93,94,95,96,97,98,99,100,101,102]
         movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
 
-        if int(self.from_to[0]) in [95,96,
-                                    101,102,
-                                    99,92,93,94,100] or int(self.from_to[1]) in [95,96,
-                                    101,102,
-                                    99,92,93,94,100]:
+        if int(self.from_to[1]) in dead_ends or int(self.from_to[1]) in dead_ends:
             movementoptions = 1
 
+        remaining_path = self.path_to_goal[-1][1] - t #remaining path length in time units
+
         prioritylevel = sum([
-                            self.delay * weights['delay'], 
                             movementoptions * weights['movementoptions'],
-                            (self.path_to_goal[-1][1] - t) * weights['routelength']
+                            # remaining_path * weights['routelength']
                             ])
 
-        # print("Priority level of aircraft", self.id, "is", prioritylevel, "because delay is", self.delay, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])))
 
         if movementoptions <= 1:
             prioritylevel = 1000
+
+        print("Priority level of aircraft", self.id, "is", prioritylevel, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", movementoptions)
+
 
         return prioritylevel
 

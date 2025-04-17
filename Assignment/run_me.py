@@ -273,7 +273,7 @@ while simulating == True:
         
         #Spawn aircraft for this timestep (use for example a random process)
         # ==== Random Spawning ====
-        random_spawning = True
+        random_spawning = False
 
         if random_spawning:
             if sensitivity_spawning_time == True and sensitivity == True:
@@ -339,12 +339,20 @@ while simulating == True:
 
         # ==== Fixed Spawning ====
         if not random_spawning:
-            spawning_time = 40
-            if (t-1) % spawning_time == 0:
-                # case 1 - 4 aircraft which touch in the bottom right corner
+            spawning_time = 10
+            if t == 1:
                 ac = Aircraft(1, 'A', 35,1,t, nodes_dict)
                 ac.status = "holding"
                 ac1 = Aircraft(2, 'D', 36,1,t, nodes_dict)
+                ac1.status = "holding"
+                aircraft_lst.append(ac)
+                agent_lst.append(ac)
+                aircraft_lst.append(ac1)
+                agent_lst.append(ac1)
+            if t == 11:
+                ac = Aircraft(3, 'A', 35,1,t, nodes_dict)
+                ac.status = "holding"
+                ac1 = Aircraft(4, 'D', 36,1,t, nodes_dict)
                 ac1.status = "holding"
                 aircraft_lst.append(ac)
                 agent_lst.append(ac)
