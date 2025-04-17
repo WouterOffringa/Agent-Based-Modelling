@@ -161,7 +161,7 @@ class Aircraft(object):
                 # print('current time is', t, 'departure time is', self.departure_time)
                 # print('projected arrival_time is',self.ideal_arrival_time)
             else:
-                                
+
                 raise Exception("No solution found for", self.id)
             
             #Check the path
@@ -278,7 +278,7 @@ class Aircraft(object):
             self.replan = True #Set to true to make sure the planning is based on current location
             self.plan_independent(nodes_dict, edges_dict, heuristics, t)
             self.conflict_detection(agent_lst, horizon, t, edges_dict, nodes_dict, heuristics)
-            self.constraints = [] #clear the constraints after replanning
+            #self.constraints = [] #clear the constraints after replanning
             return
         return 
 
