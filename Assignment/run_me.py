@@ -21,6 +21,9 @@ from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
 from datetime import datetime
+# import matplotlib
+# matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
+# import matplotlib.pyplot as plt
 
 #SET up the simulation tracker
 
@@ -50,15 +53,15 @@ def import_layout(nodes_file, edges_file):
     RETURNS:
         - nodes_dict = dictionary with nodes and node properties
         - edges_dict = dictionary with edges annd edge properties
-        - start_and_goal_locations = dictionary with node ids for arrival runways, departure runways and gates 
+        - start_and_goal_locations = dictionary with node ids for arrival runways, departure runways and gates
     """
     gates_xy = []   #lst with (x,y) positions of gates
     rwy_dep_xy = [] #lst with (x,y) positions of entry points of departure runways
     rwy_arr_xy = [] #lst with (x,y) positions of exit points of arrival runways
-    
+
     df_nodes = pd.read_excel(os.getcwd() + "/" + nodes_file)
     df_edges = pd.read_excel(os.getcwd() + "/" + edges_file)
-    
+
     #Create nodes_dict from df_nodes
     nodes_dict = {}
     for i, row in df_nodes.iterrows():
@@ -71,7 +74,7 @@ def import_layout(nodes_file, edges_file):
                         }
         node_id = row["id"]
         nodes_dict[node_id] = node_properties
-        
+
         #Add node type
         if row["type"] == "rwy_d":
             rwy_dep_xy.append((row["x_pos"],row["y_pos"]))
@@ -81,10 +84,10 @@ def import_layout(nodes_file, edges_file):
             gates_xy.append((row["x_pos"],row["y_pos"]))
 
     #Specify node ids of gates, departure runways and arrival runways in a dict
-    start_and_goal_locations = {"gates": gates_xy, 
+    start_and_goal_locations = {"gates": gates_xy,
                                 "dep_rwy": rwy_dep_xy,
                                 "arr_rwy": rwy_arr_xy}
-    
+
     #Create edges_dict from df_edges
     edges_dict = {}
     for i, row in df_edges.iterrows():
@@ -105,8 +108,8 @@ def import_layout(nodes_file, edges_file):
     for edge in edges_dict:
         from_node = edge[0]
         to_node = edge[1]
-        nodes_dict[from_node]["neighbors"].add(to_node)  
-    
+        nodes_dict[from_node]["neighbors"].add(to_node)
+
     return nodes_dict, edges_dict, start_and_goal_locations
 
 
@@ -122,6 +125,41 @@ rwy_dep = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_d"]
 rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
 tug_gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "taxiparking"]
 
+
+## Start sensitivity analysis
+sensitivity = True        # Set to true if want to do sensitivity
+local = True
+
+#For local sensitivity determine what parameters to do sensitivity on
+sensitivity_nr_taxibots = True
+sensitivity_spawning_time = False
+
+#determine initial values and sensitivity:
+p_taxibots = 4
+dp_taxibots = 1
+
+p_spawning_time = 4
+dp_spawning_time = 2 ## can alter later!
+
+
+if sensitivity == True:
+    p_taxibots_list = [p_taxibots - dp_taxibots, p_taxibots, p_taxibots + dp_taxibots]
+    p_spawntime_list = [p_spawning_time - dp_spawning_time, p_spawning_time, p_spawning_time + dp_spawning_time]
+
+    if local == True:
+        if sensitivity_nr_taxibots == True:
+            parameter_list = p_taxibots_list
+        if sensitivity_spawning_time == True:
+            parameter_list = p_spawntime_list
+        Number_of_sims = len(parameter_list)
+        if Number_of_sims != 3:
+            print('I should be doing local sensitivity, but I am doing', Number_of_sims,'simulations, which is wrong!')
+    if local == False:
+        parameter_list = []
+        for taxi in p_taxibots_list:
+            for time in p_spawntime_list:
+                parameter_list.append({'taxibots': taxi, 'spawning_time': time})
+        Number_of_sims = len(parameter_list)
 
 while simulating == True:
     sim_results = []
@@ -173,10 +211,11 @@ while simulating == True:
             
         return graph
 
+    #%% RUN SIMULATION
     # =============================================================================
     # 0. Initialization
     # =============================================================================
-        
+
     graph = create_graph(nodes_dict, edges_dict, plot_graph)
     heuristics = calc_heuristics(graph, nodes_dict)
 
@@ -190,7 +229,7 @@ while simulating == True:
     # =============================================================================
     # 1. While loop and visualization
     # =============================================================================
-    
+
     running=True
     escape_pressed = False
     time_end = simulation_time
@@ -198,6 +237,7 @@ while simulating == True:
     t = 0
     i = 0
     arrival_available, dep_available = True, True
+
 
     print("\nSimulation Started\n")
     while running:
@@ -236,7 +276,14 @@ while simulating == True:
         random_spawning = True
 
         if random_spawning:
-            spawning_time = 4
+            if sensitivity_spawning_time == True and sensitivity == True:
+                if local == True:
+                    spawning_time = parameter_list[sim_no - 1]  # sim_no-1 to make the current simulation match with index
+                if local == False:
+                    spawning_time = parameter_list[sim_no - 1]['spawning_time']
+            if sensitivity == False or sensitivity_spawning_time == False:
+                spawning_time = 4       # This is the default for when no sensitivity is done
+
             if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
                 ac_type = random.choice(['A','D']) #randomly choose arrival or departure
                 if ac_type == 'D':
@@ -249,7 +296,7 @@ while simulating == True:
                                 available_gates.remove(ac.from_to[0])
                             elif ac.goal in available_gates:
                                 available_gates.remove(ac.goal)
-                        elif ac.status == "taxiing": 
+                        elif ac.status == "taxiing":
                             if ac.goal in available_gates:
                                 available_gates.remove(ac.goal)
             
@@ -262,11 +309,11 @@ while simulating == True:
                         ac.status = "holding"
                         aircraft_lst.append(ac)
                         agent_lst.append(ac)
-            
+
                     else:
                         print("==No gates available for departure")
                         dep_available = False
-            
+
                 else:
                     rwy_arr = [37,38]
                     available_rwy = rwy_arr
@@ -288,8 +335,8 @@ while simulating == True:
                     else:
                         print("==No runways available for arrival")
                         arrival_available = False
-        
-        
+
+
         # ==== Fixed Spawning ====
         if not random_spawning:
             spawning_time = 40
@@ -308,8 +355,19 @@ while simulating == True:
         
         # ==== Spawning the taxibots ====
         spawning_locations = tug_gates
+
+        if sensitivity_nr_taxibots == True and sensitivity == True:
+            if local == True:
+                nr_taxibots = parameter_list[sim_no - 1]    # to make sim_no correspond with index
+            if local == False:
+                nr_taxibots = parameter_list[sim_no - 1]['taxibots']
+        if sensitivity == False or sensitivity_nr_taxibots == False:
+            nr_taxibots = 5
+        amount_deleted_taxibots = 5 - nr_taxibots
+        spawning_locations = spawning_locations[amount_deleted_taxibots:]
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         if t == 0:
+            print('spawning locations are', spawning_locations)
             for i, location in enumerate(spawning_locations, start=1):
                 tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
                 tug_lst.append(tug)
@@ -420,4 +478,57 @@ while simulating == True:
     # =============================================================================
     # 2. Implement analysis of output data here
     # =============================================================================
-    #what data do you want to show?
+
+### Need to make this compatible with what I made for sensitivity at the beginning of run_me
+
+## Local sensitivity analysis results
+if local == True:
+    X_minus = sim_results[0]["waiting_time"]    ## need to fill in, but is simulation output for p-dp
+    X = sim_results[1]["waiting_time"]           ## need to fill in, but is simulation output for p
+    X_plus = sim_results[2]["waiting_time"]     ## need to fill in, but is simulation output for p+dp
+    X_list = [X_minus, X, X_plus]
+
+    if sensitivity_nr_taxibots == True:
+        p = p_taxibots
+        dp = dp_taxibots
+        S_plus = (X_plus - X) / (dp / p)
+        S_minus = (X - X_minus) / (dp / p)
+        print('the S plus parameter is', S_plus)
+        print("the S minus parameter is", S_minus)
+
+        ## plot local sensitivity for taxibots
+        plt.figure(figsize=(8, 5))
+        plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+
+        plt.xlabel("Number of taxibots")
+        plt.ylabel("Delay")
+        plt.title("Delay vs Number of Taxibots")
+
+        # Optional: grid and tight layout
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+
+    if sensitivity_spawning_time == True:
+        p = p_spawning_time
+        dp = dp_spawning_time
+        S_plus = (X_plus - X) / (dp/p)
+        S_minus = (X - X_minus) / (dp/p)
+        print('the S plus parameter is', S_plus)
+        print("the S minus parameter is", S_minus)
+
+        ## plot local sensitivity for taxibots
+        plt.figure(figsize=(8, 5))
+        plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+
+        plt.xlabel("Spawning time")
+        plt.ylabel("Delay")
+        plt.title("Delay vs Spawning Time")
+
+        # Optional: grid and tight layout
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+# if local == False:
