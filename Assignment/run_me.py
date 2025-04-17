@@ -463,6 +463,8 @@ while simulating == True:
         print("Stdev result: ", Stdev_result)
         mean_results.append(Mean_result)
         Stdev_results.append(Stdev_result)
+        print("Mean results list: ", mean_results)
+        print("Stdev results list: ", Stdev_results)
 
         #Check if correct confidence is reached
         bound = 2 * z_value * Stdev_result / (sim_no**0.5)
