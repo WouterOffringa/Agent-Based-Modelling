@@ -302,9 +302,10 @@ class Taxibot(object):
                                             'movementoptions': -1,
                                             }):
         
+        dead_ends = [1,2,34,35,36,92,93,94,95,96,97,98,99,100,101,102]
         movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
 
-        if int(self.from_to[1]) in [95,96,101,102,99,92,93,94,100] or int(self.from_to[1]) in [95,96,101,102,99,92,93,94,100]:
+        if int(self.from_to[1]) in dead_ends or int(self.from_to[1]) in dead_ends:
             movementoptions = 1
 
         remaining_path = self.path_to_goal[-1][1] - t #remaining path length in time units
