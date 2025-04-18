@@ -40,7 +40,7 @@ Minimum_sims = 100
 sim_no = 1
 alfa = 0.05 #95% confidence interval
 l = 0.5 #length of the interval for the total delay
-z_value = 1.96 #fill in compared to alfa /2
+z_value = 1.96 #fill in compared to alfa /2 (alpha 0.05, gives alfa/2 of 0.025, z_value = 1.96)
 Entries_per_sim = 20 #number of entries per simulation
 mean_results = []
 Stdev_results = []
@@ -452,7 +452,7 @@ while simulating == True:
             if len(sim_results) > Entries_per_sim:
                 #Save sim results to a file
                 df = pd.DataFrame(sim_results, columns=columns_results)
-                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+33}.csv"), index=False)
+                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+74}.csv"), index=False)
 
                 print("Max Entries per sim reached, restarting simulation")
                 running = False
