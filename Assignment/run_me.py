@@ -273,7 +273,7 @@ while simulating == True:
                                                     "xy_pos": tug.position,
                                                     "heading": tug.heading,
                                                     "status": tug.status}
-                escape_pressed = map_running(map_properties, current_states, t)
+                counter, escape_pressed = map_running(map_properties, current_states, t)
                 timer.sleep(visualization_speed) 
             
             #Spawn aircraft for this timestep (use for example a random process)
@@ -452,7 +452,8 @@ while simulating == True:
             if len(sim_results) > Entries_per_sim:
                 #Save sim results to a file
                 df = pd.DataFrame(sim_results, columns=columns_results)
-                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+208}.csv"), index=False)
+                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+208+"_"+counter}.csv"), index=False)
+                print(counter, "amount of collisions detected")
 
                 print("Max Entries per sim reached, restarting simulation")
                 running = False
