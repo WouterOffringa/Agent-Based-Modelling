@@ -21,6 +21,10 @@ from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
 from datetime import datetime
+import gc # garbage collector
+# import matplotlib
+# matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
+# import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
 import matplotlib.pyplot as plt
@@ -29,7 +33,7 @@ import matplotlib.pyplot as plt
 
 t_max = 20
 
-results_folder = "simulation_results"
+results_folder = "simulation_results_v2"
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
@@ -39,7 +43,7 @@ Minimum_sims = 100
 sim_no = 1
 alfa = 0.05 #95% confidence interval
 l = 0.5 #length of the interval for the total delay
-z_value = 1.96 #fill in compared to alfa /2
+z_value = 1.96 #fill in compared to alfa /2 (alpha 0.05, gives alfa/2 of 0.025, z_value = 1.96)
 Entries_per_sim = 20 #number of entries per simulation
 mean_results = []
 Stdev_results = []
@@ -165,6 +169,7 @@ if sensitivity == True:
         Number_of_sims_sensitivity = len(parameter_list)
 
 while simulating == True:
+    gc.collect() # garbage collector
     sim_results = []
 
     #Parameters that can be changed:
@@ -174,7 +179,7 @@ while simulating == True:
     #Visualization (can also be changed)
     plot_graph = False                      # show graph representation in NetworkX
     visualization = True                    # pygame visualization
-    slow_factor = 1                         # 5 here means 5 times slower
+    slow_factor = 0.01                      # 5 here means 5 times slower
     visualization_speed = 0.1*slow_factor   # set at 0.1 as default
 
 
@@ -240,133 +245,157 @@ while simulating == True:
     t = 0
     i = 0
     arrival_available, dep_available = True, True
+    UnsolvablePresent = True
+    n_unsolvable = 0
 
 
     print("\nSimulation Started\n")
-    while running:
+    try:
+        while running:
 
-        t= round(t,2) 
+            t= round(t,2) 
 
-        #Check conditions for termination
-        if t >= time_end or escape_pressed: 
-            running = False
-            pg.quit()
-            print("Simulation Stopped")
-            break 
-        
-        #Visualization: Update map if visualization is true
-        if visualization:
-            current_states = {} #Collect current states of all aircraft
-            for ac in aircraft_lst:
-                if ac.status == "taxiing" or ac.status == "holding" or ac.status == "pickup":
-                    current_states[ac.id] = {"type": "aircraft",
-                                            "ac_id": ac.id,
-                                            "xy_pos": ac.position,
-                                            "heading": ac.heading,
-                                            "status": ac.status}
-            for tug in tug_lst:
-                if tug.status != "following":
-                    current_states[tug.id] = {"type": "tug",
-                                                "ac_id": tug.id,
-                                                "xy_pos": tug.position,
-                                                "heading": tug.heading,
-                                                "status": tug.status}
-            escape_pressed = map_running(map_properties, current_states, t)
-            timer.sleep(visualization_speed) 
-        
-        #Spawn aircraft for this timestep (use for example a random process)
-        # ==== Random Spawning ====
-        random_spawning = True
-
-        if random_spawning:
-            if sensitivity_spawning_time == True and sensitivity == True:
-                if local == True:
-                    spawning_time = parameter_list[sim_no - 1]  # sim_no-1 to make the current simulation match with index
-                if local == False:
-                    spawning_time = parameter_list[sim_no - 1]['spawning_time']
-            if sensitivity == False or sensitivity_spawning_time == False:
-                spawning_time = 4       # This is the default for when no sensitivity is done
-
-            if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
-                ac_type = random.choice(['A','D']) #randomly choose arrival or departure
-                if ac_type == 'D':
-                    available_gates = gates.copy()
-                    for ac in aircraft_lst:
-                        if ac.status == "holding" or ac.status == "pickup":
-                            if ac.start in available_gates:
-                                available_gates.remove(ac.start)
-                            elif ac.from_to[0] in available_gates:
-                                available_gates.remove(ac.from_to[0])
-                            elif ac.goal in available_gates:
-                                available_gates.remove(ac.goal)
-                        elif ac.status == "taxiing":
-                            if ac.goal in available_gates:
-                                available_gates.remove(ac.goal)
+            #Check conditions for termination
+            if t >= time_end or escape_pressed: 
+                running = False
+                pg.quit()
+                print("Simulation Stopped")
+                break 
             
-                    #print("Available gates for departure: ", available_gates)
-                    if len(available_gates) > 0:
-                        i += 1
-                        dep_available = True
-                        spawn_gate = random.choice(available_gates)
-                        ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
-                        ac.status = "holding"
-                        aircraft_lst.append(ac)
-                        agent_lst.append(ac)
+            #Visualization: Update map if visualization is true
+            if visualization:
+                current_states = {} #Collect current states of all aircraft
+                for ac in aircraft_lst:
+                    if ac.status == "taxiing" or ac.status == "holding" or ac.status == "pickup":
+                        current_states[ac.id] = {"type": "aircraft",
+                                                "ac_id": ac.id,
+                                                "xy_pos": ac.position,
+                                                "heading": ac.heading,
+                                                "status": ac.status}
+                for tug in tug_lst:
+                    if tug.status != "following":
+                        current_states[tug.id] = {"type": "tug",
+                                                    "ac_id": tug.id,
+                                                    "xy_pos": tug.position,
+                                                    "heading": tug.heading,
+                                                    "status": tug.status}
+                escape_pressed = map_running(map_properties, current_states, t)
+                timer.sleep(visualization_speed) 
+            
+            #Spawn aircraft for this timestep (use for example a random process)
+            # ==== Random Spawning ====
+            random_spawning = True
+
+            if random_spawning:
+                if sensitivity_spawning_time == True and sensitivity == True:
+                    if local == True:
+                        spawning_time = parameter_list[sim_no - 1]  # sim_no-1 to make the current simulation match with index
+                    if local == False:
+                        spawning_time = parameter_list[sim_no - 1]['spawning_time']
+                if sensitivity == False or sensitivity_spawning_time == False:
+                    spawning_time = 4       # This is the default for when no sensitivity is done
+
+                if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
+                    ac_type = random.choice(['A','D']) #randomly choose arrival or departure
+                    if ac_type == 'D':
+                        available_gates = gates.copy()
+                        for ac in aircraft_lst:
+                            if ac.status == "holding" or ac.status == "pickup":
+                                if ac.start in available_gates:
+                                    available_gates.remove(ac.start)
+                                elif ac.from_to[0] in available_gates:
+                                    available_gates.remove(ac.from_to[0])
+                                elif ac.goal in available_gates:
+                                    available_gates.remove(ac.goal)
+                            elif ac.status == "taxiing":
+                                if ac.goal in available_gates:
+                                    available_gates.remove(ac.goal)
+                
+                        #print("Available gates for departure: ", available_gates)
+                        if len(available_gates) > 0:
+                            i += 1
+                            dep_available = True
+                            spawn_gate = random.choice(available_gates)
+                            ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
+                            ac.status = "holding"
+                            aircraft_lst.append(ac)
+                            agent_lst.append(ac)
+
+                        else:
+                            print("==No gates available for departure")
+                            dep_available = False
 
                     else:
-                        print("==No gates available for departure")
-                        dep_available = False
-
-                else:
-                    rwy_arr = [37,38]
-                    available_rwy = rwy_arr
-                    for ac in aircraft_lst:
-                        if ac.status == "holding" or ac.status == "pickup": # and not (ac.status == "arrived" or ac.status == "taxiing"):
-                            if ac.start in available_rwy:
-                                available_rwy.remove(ac.start)
-                            elif ac.from_to[0] in available_rwy:
-                                available_rwy.remove(ac.from_to[0])
-                    #print("Available runways for arrival: ", available_rwy)
-                    if len(available_rwy) > 0:
-                        i += 1
-                        arrival_available = True
-                        spawn_rwy = random.choice(available_rwy)
-                        ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
-                        ac.status = "holding"
-                        aircraft_lst.append(ac)
-                        agent_lst.append(ac)
-                    else:
-                        print("==No runways available for arrival")
-                        arrival_available = False
+                        rwy_arr = [37,38]
+                        available_rwy = rwy_arr
+                        for ac in aircraft_lst:
+                            if ac.status == "holding" or ac.status == "pickup": # and not (ac.status == "arrived" or ac.status == "taxiing"):
+                                if ac.start in available_rwy:
+                                    available_rwy.remove(ac.start)
+                                elif ac.from_to[0] in available_rwy:
+                                    available_rwy.remove(ac.from_to[0])
+                        #print("Available runways for arrival: ", available_rwy)
+                        if len(available_rwy) > 0:
+                            i += 1
+                            arrival_available = True
+                            spawn_rwy = random.choice(available_rwy)
+                            ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
+                            ac.status = "holding"
+                            aircraft_lst.append(ac)
+                            agent_lst.append(ac)
+                        else:
+                            print("==No runways available for arrival")
+                            arrival_available = False
 
 
-        # ==== Fixed Spawning ====
-        if not random_spawning:
-            spawning_time = 10
-            if t == 1:
-                ac = Aircraft(1, 'A', 35,1,t, nodes_dict)
-                ac.status = "holding"
-                ac1 = Aircraft(2, 'D', 36,1,t, nodes_dict)
-                ac1.status = "holding"
-                aircraft_lst.append(ac)
-                agent_lst.append(ac)
-                aircraft_lst.append(ac1)
-                agent_lst.append(ac1)
-            if t == 11:
-                ac = Aircraft(3, 'A', 35,1,t, nodes_dict)
-                ac.status = "holding"
-                ac1 = Aircraft(4, 'D', 36,1,t, nodes_dict)
-                ac1.status = "holding"
-                aircraft_lst.append(ac)
-                agent_lst.append(ac)
-                aircraft_lst.append(ac1)
-                agent_lst.append(ac1)
+            # ==== Fixed Spawning ====
+            if not random_spawning:
+                spawning_time = 10
+                if t == 1:
+                    ac = Aircraft(1, 'A', 35,1,t, nodes_dict)
+                    ac.status = "holding"
+                    ac1 = Aircraft(2, 'D', 36,1,t, nodes_dict)
+                    ac1.status = "holding"
+                    aircraft_lst.append(ac)
+                    agent_lst.append(ac)
+                    aircraft_lst.append(ac1)
+                    agent_lst.append(ac1)
+                if t == 11:
+                    ac = Aircraft(3, 'A', 35,1,t, nodes_dict)
+                    ac.status = "holding"
+                    ac1 = Aircraft(4, 'D', 36,1,t, nodes_dict)
+                    ac1.status = "holding"
+                    aircraft_lst.append(ac)
+                    agent_lst.append(ac)
+                    aircraft_lst.append(ac1)
+                    agent_lst.append(ac1)
 
 
-        
-        # ==== Spawning the taxibots ====
-        spawning_locations = tug_gates
+            
+            # ==== Spawning the taxibots ====
+            spawning_locations = tug_gates
 
+            if sensitivity_nr_taxibots == True and sensitivity == True:
+                if local == True:
+                    nr_taxibots = parameter_list[sim_no - 1]    # to make sim_no correspond with index
+                if local == False:
+                    nr_taxibots = parameter_list[sim_no - 1]['taxibots']
+            if sensitivity == False or sensitivity_nr_taxibots == False:
+                nr_taxibots = 5
+            amount_deleted_taxibots = 5 - nr_taxibots
+            spawning_locations = spawning_locations[amount_deleted_taxibots:]
+            alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            if t == 0:
+                print('spawning locations are', spawning_locations)
+                for i, location in enumerate(spawning_locations, start=1):
+                    tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
+                    tug_lst.append(tug)
+                    agent_lst.append(tug)
+                    tug.idle = True
+                constraints = []
+                run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1., t+1.5], constraints=constraints)
+            
+            #Requesting taxibots for ac
         if sensitivity_nr_taxibots == True and sensitivity == True:
             print('parameter list is', parameter_list)
             print('current simulation number is', sim_no)
@@ -391,78 +420,83 @@ while simulating == True:
         
         #Requesting taxibots for ac
 
-        for ac in aircraft_lst:
-            if ac.status == "holding" and t % 0.5 == 0:
-                ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
+            for ac in aircraft_lst:
+                if ac.status == "holding" and t % 0.5 == 0:
+                    ac.request_taxibot(nodes_dict, tug_lst, heuristics, t)
 
-        #Do planning 
-        if planner == "Independent":     
+            #Do planning 
+            if planner == "Independent":     
 
-            if t % 0.5 == 0:
-                PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
-                run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1], constraints=constraints)
-                run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+                if t % 0.5 == 0:
+                    PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
+                    run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1], constraints=constraints)
+                    run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
 
+                    
+
+            elif planner == "Prioritized":
+                run_prioritized_planner()
+            elif planner == "CBS":
+                run_CBS()
+            #elif planner == -> you may introduce other planners here
+            else:
+                raise Exception("Planner:", planner, "is not defined.")
+                            
+
+            #Move the aircraft that are taxiing
+            ac_remove = []
+            for ac in aircraft_lst: 
+                if ac.status == "taxiing": 
+                    ac.move(dt, t)
+                if ac.status == "arrived":
+                    ac_remove.append(ac)
+
+            #Remove aircraft that have arrived ans save results
+            for ac in ac_remove:
+                #Track all the data of the aircraft
+                taxi_time = ac.arrival_time - ac.departure_time
+                optimal_taxi_time = ac.ideal_arrival_time - ac.departure_time
+                taxi_delay = taxi_time - optimal_taxi_time
+
+                ac_results = {"agent_id": ac.id,
+                                "start": ac.start,
+                                "goal": ac.goal,
+                                "arrival_time": ac.arrival_time,
+                                "departure_time": ac.departure_time,
+                                "taxi_time": taxi_time,
+                                "optimal taxi_time": optimal_taxi_time,
+                                "waiting_time": ac.delay,
+                                "taxi_delay": taxi_delay,
+                                "total_delay": (taxi_delay + ac.delay)}     
+                sim_results.append(ac_results)
                 
+                aircraft_lst.remove(ac)
+                agent_lst.remove(ac)
 
-        elif planner == "Prioritized":
-            run_prioritized_planner()
-        elif planner == "CBS":
-            run_CBS()
-        #elif planner == -> you may introduce other planners here
-        else:
-            raise Exception("Planner:", planner, "is not defined.")
-                        
+            #Move the taxibots that are taxiing
+            for tug in tug_lst:
+                if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
+                    tug.move(dt, t)
 
-        #Move the aircraft that are taxiing
-        ac_remove = []
-        for ac in aircraft_lst: 
-            if ac.status == "taxiing": 
-                ac.move(dt, t)
-            if ac.status == "arrived":
-                ac_remove.append(ac)
+            if len(sim_results) > Entries_per_sim:
+                #Save sim results to a file
+                df = pd.DataFrame(sim_results, columns=columns_results)
+                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+112}.csv"), index=False)
 
-        #Remove aircraft that have arrived ans save results
-        for ac in ac_remove:
-            #Track all the data of the aircraft
-            taxi_time = ac.arrival_time - ac.departure_time
-            optimal_taxi_time = ac.ideal_arrival_time - ac.departure_time
-            taxi_delay = taxi_time - optimal_taxi_time
-
-            ac_results = {"agent_id": ac.id,
-                            "start": ac.start,
-                            "goal": ac.goal,
-                            "arrival_time": ac.arrival_time,
-                            "departure_time": ac.departure_time,
-                            "taxi_time": taxi_time,
-                            "optimal taxi_time": optimal_taxi_time,
-                            "waiting_time": ac.delay,
-                            "taxi_delay": taxi_delay,
-                            "total_delay": (taxi_delay + ac.delay)}     
-            sim_results.append(ac_results)
+                print("Max Entries per sim reached, restarting simulation")
+                running = False
             
-            aircraft_lst.remove(ac)
-            agent_lst.remove(ac)
-
-        #Move the taxibots that are taxiing
-        for tug in tug_lst:
-            if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
-                tug.move(dt, t)
-
-        if len(sim_results) > Entries_per_sim:
-            #Save sim results to a file
-            df = pd.DataFrame(sim_results, columns=columns_results)
-            df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no}.csv"), index=False)
-
-            print("Max Entries per sim reached, restarting simulation")
-            running = False
-            pg.quit()
-
-
-        t = t + dt
-
+            t = t + dt
+            if t % 10 == 0:
+                gc.collect()
+    except:
+        UnsolvablePresent = True
+    pg.quit()
     #Calculate mean and std of results, update
-    if sim_no == 1:
+    if UnsolvablePresent and running:
+        print('Simulation contained an unsolvable conflict resolution, skipping...')
+        n_unsolvable
+    elif sim_no == 1:
         Mean_result = df["total_delay"].mean()
         Stdev_result = 0
         print("Mean result: ", Mean_result)
@@ -477,12 +511,16 @@ while simulating == True:
         print("Stdev result: ", Stdev_result)
         mean_results.append(Mean_result)
         Stdev_results.append(Stdev_result)
+        print("Mean results list: ", mean_results)
+        print("Stdev results list: ", Stdev_results)
 
         #Check if correct confidence is reached
         bound = 2 * z_value * Stdev_result / (sim_no**0.5)
         print("bound is: ", bound, "l is: ", l)	
     
-    if bound < l and sim_no > Minimum_sims:
+    if UnsolvablePresent and running:
+        pass
+    elif bound < l and sim_no > Minimum_sims:
         print("Confidence interval reached")
         simulating = False
         pg.quit()

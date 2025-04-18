@@ -20,14 +20,12 @@ class Taxibot(object):
         self.start = spawn_node                     #spawn_node_id
         self.holding_location = holding_location    #holding_location_node_id
         self.nodes_dict = nodes_dict                #keep copy of nodes dict
-        self.status = "available"                   #begin status
+        self.status = "holding"                     #begin status
         #self.planning_status = None                 #ensure we dont plan when we are taxxiing already
         self.idle = True                            #If idling, to keep aircraft on the map without a driving plan
         self.Goal_AC = None
 
         #Route related
-                #Route related
-        self.status = "holding"
         self.path_to_goal = [] #planned path left from current location
         self.from_to = [0,0]
         self.constraints = []
@@ -302,27 +300,27 @@ class Taxibot(object):
                                             'movementoptions': -1,
                                             }):
         
+        dead_ends = [1,2,34,35,36,92,93,94,95,96,97,98,99,100,101,102]
         movementoptions = sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])
 
-        if int(self.from_to[1]) in [95,96,101,102,99,92,93,94,100] or int(self.from_to[1]) in [95,96,101,102,99,92,93,94,100]:
+        if int(self.from_to[1]) in dead_ends or int(self.from_to[1]) in dead_ends:
             movementoptions = 1
 
         remaining_path = self.path_to_goal[-1][1] - t #remaining path length in time units
 
         prioritylevel = sum([
                             movementoptions * weights['movementoptions'],
-                            # remaining_path * weights['routelength']
+                            remaining_path * weights['routelength']
                             ])
 
-        print("Priority level of tug", self.id, "is", prioritylevel, "because remaining path length is", (self.path_to_goal[-1][1] - t), "and movement options are", (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])))
+
+
+        # print("Priority level of tug", self.id, "is", prioritylevel, "because remaining path length is", (self.path_to_goal[-1][1] - t), "and movement options are", (sum([1 for edge in edges_dict if edge[0] == self.from_to[0]])))
 
         if movementoptions == 1:
             prioritylevel = 1000
         elif self.status == "taxiing, available":
             prioritylevel = -1000
-        
-        print("Priority level of aircraft", self.id, "is", prioritylevel, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", movementoptions)
-
         
         return prioritylevel
         
