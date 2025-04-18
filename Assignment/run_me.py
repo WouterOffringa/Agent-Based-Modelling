@@ -21,13 +21,13 @@ from prioritized import run_prioritized_planner
 from cbs import run_CBS
 from PrioritySolver import PriorityDetector
 from datetime import datetime
-# import matplotlib
-# matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
-# import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
+import matplotlib.pyplot as plt
 
 #SET up the simulation tracker
 
-t_max = 100
+t_max = 20
 
 results_folder = "simulation_results"
 if not os.path.exists(results_folder):
@@ -35,7 +35,7 @@ if not os.path.exists(results_folder):
 
 columns_results = ["agent_id", "start", "goal", "arrival_time", "departure_time", "taxi_time", "optimal taxi_time", "waiting_time", "taxi_delay", "total_delay"]
 simulating = True
-Minimum_sims = 100 
+Minimum_sims = 100
 sim_no = 1
 alfa = 0.05 #95% confidence interval
 l = 0.5 #length of the interval for the total delay
@@ -127,7 +127,7 @@ tug_gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "taxipar
 
 
 ## Start sensitivity analysis
-sensitivity = False        # Set to true if want to do sensitivity
+sensitivity = True        # Set to true if want to do sensitivity
 local = True
 
 #For local sensitivity determine what parameters to do sensitivity on
@@ -141,8 +141,11 @@ dp_taxibots = 1
 p_spawning_time = 4
 dp_spawning_time = 2 ## can alter later!
 
-
 if sensitivity == True:
+
+    # Parameters that change because sensitivity:
+    Entries_per_sim = 2  # To have shorter sims for trials sensitivity
+
     p_taxibots_list = [p_taxibots - dp_taxibots, p_taxibots, p_taxibots + dp_taxibots]
     p_spawntime_list = [p_spawning_time - dp_spawning_time, p_spawning_time, p_spawning_time + dp_spawning_time]
 
@@ -151,15 +154,15 @@ if sensitivity == True:
             parameter_list = p_taxibots_list
         if sensitivity_spawning_time == True:
             parameter_list = p_spawntime_list
-        Number_of_sims = len(parameter_list)
-        if Number_of_sims != 3:
+        Number_of_sims_sensitivity = len(parameter_list)
+        if Number_of_sims_sensitivity != 3:
             print('I should be doing local sensitivity, but I am doing', Number_of_sims,'simulations, which is wrong!')
     if local == False:
         parameter_list = []
         for taxi in p_taxibots_list:
             for time in p_spawntime_list:
                 parameter_list.append({'taxibots': taxi, 'spawning_time': time})
-        Number_of_sims = len(parameter_list)
+        Number_of_sims_sensitivity = len(parameter_list)
 
 while simulating == True:
     sim_results = []
@@ -273,7 +276,7 @@ while simulating == True:
         
         #Spawn aircraft for this timestep (use for example a random process)
         # ==== Random Spawning ====
-        random_spawning = False
+        random_spawning = True
 
         if random_spawning:
             if sensitivity_spawning_time == True and sensitivity == True:
@@ -365,6 +368,8 @@ while simulating == True:
         spawning_locations = tug_gates
 
         if sensitivity_nr_taxibots == True and sensitivity == True:
+            print('parameter list is', parameter_list)
+            print('current simulation number is', sim_no)
             if local == True:
                 nr_taxibots = parameter_list[sim_no - 1]    # to make sim_no correspond with index
             if local == False:
@@ -375,7 +380,7 @@ while simulating == True:
         spawning_locations = spawning_locations[amount_deleted_taxibots:]
         alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         if t == 0:
-            print('spawning locations are', spawning_locations)
+            # print('spawning locations are', spawning_locations)
             for i, location in enumerate(spawning_locations, start=1):
                 tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
                 tug_lst.append(tug)
@@ -453,6 +458,7 @@ while simulating == True:
             running = False
             pg.quit()
 
+
         t = t + dt
 
     #Calculate mean and std of results, update
@@ -481,6 +487,14 @@ while simulating == True:
         simulating = False
         pg.quit()
         break
+
+    ## Break condition for sensitivity:
+    if sensitivity:
+        if sim_no == Number_of_sims_sensitivity:
+            print('Did all simulations for sensitivity')
+            simulating = False
+            pg.quit()
+            break
         
     sim_no = sim_no + 1    
     # =============================================================================
@@ -491,9 +505,9 @@ while simulating == True:
 
 ## Local sensitivity analysis results
 if local == True:
-    X_minus = sim_results[0]["waiting_time"]    ## need to fill in, but is simulation output for p-dp
-    X = sim_results[1]["waiting_time"]           ## need to fill in, but is simulation output for p
-    X_plus = sim_results[2]["waiting_time"]     ## need to fill in, but is simulation output for p+dp
+    X_minus = mean_results[0]
+    X = mean_results[1]
+    X_plus = mean_results[2]
     X_list = [X_minus, X, X_plus]
 
     if sensitivity_nr_taxibots == True:
@@ -505,15 +519,21 @@ if local == True:
         print("the S minus parameter is", S_minus)
 
         ## plot local sensitivity for taxibots
-        plt.figure(figsize=(8, 5))
-        plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-        plt.xlabel("Number of taxibots")
-        plt.ylabel("Delay")
-        plt.title("Delay vs Number of Taxibots")
+        axes[0].plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+        axes[0].set_xlabel("Number of taxibots")
+        axes[0].set_ylabel("Delay")
+        axes[0].set_title("Delay vs Number of Taxibots")
+        axes[0].grid(True)
 
-        # Optional: grid and tight layout
-        plt.grid(True)
+        axes[1].plot(parameter_list, Stdev_results, marker='s', linestyle='--', color='green')
+        axes[1].set_xlabel("Number of taxibots")
+        axes[1].set_ylabel("Standard Deviation")
+        axes[1].set_title("Std Dev vs Number of Taxibots")
+        axes[1].grid(True)
+
+        # Tight layout for better spacing
         plt.tight_layout()
         plt.show()
 
@@ -527,16 +547,18 @@ if local == True:
         print("the S minus parameter is", S_minus)
 
         ## plot local sensitivity for taxibots
-        plt.figure(figsize=(8, 5))
-        plt.plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-        plt.xlabel("Spawning time")
-        plt.ylabel("Delay")
-        plt.title("Delay vs Spawning Time")
+        axes[0].plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
+        axes[0].set_xlabel("Spawning time")
+        axes[0].set_ylabel("Delay")
+        axes[0].set_title("Delay vs Spawning time")
+        axes[0].grid(True)
 
-        # Optional: grid and tight layout
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
+        axes[1].plot(parameter_list, Stdev_results, marker='s', linestyle='--', color='green')
+        axes[1].set_xlabel("Spawning time")
+        axes[1].set_ylabel("Standard Deviation")
+        axes[1].set_title("Std Dev vs Spawning time")
+        axes[1].grid(True)
 
 # if local == False:

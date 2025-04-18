@@ -110,7 +110,7 @@ class Aircraft(object):
         if self.position == xy_to and self.path_to_goal[0][1] == t+dt: #If with this move its current to node is reached
             if self.position == self.nodes_dict[self.goal]["xy_pos"]: #if the final goal is reached
                 self.status = "arrived"
-                print("\nAircraft", self.id, "has arrived at its destination at t=", t)
+                # print("\nAircraft", self.id, "has arrived at its destination at t=", t)
                 if self.arrival_time == None:
                     self.arrival_time = np.ceil(t * 2) / 2  #rounds up to half a second always
                     # print("arrival time is", self.arrival_time)
@@ -235,14 +235,14 @@ class Aircraft(object):
                     Conflicted_agent = agent
                     Conflicted_node = own_nextsteps[tau]
                     conflict_time = horizon[tau]
-                    print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
+                    # print("______Conflict detected between", self.id, "and", agent.id, "at node", int(Conflicted_node),". Now (t=", t, ") starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, [Conflicted_node], conflict_time, heuristics, agent_lst, horizon)
 
                 if dummynode not in own_nextedges[tau] and own_nextedges[tau] == other_edges[agent][tau]:
                     Conflicted_agent = agent
                     Conflicted_edge = own_nextedges[tau]
                     conflict_time = horizon[tau]
-                    print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
+                    # print("______Conflict detected between", self.id, "and", agent.id, "at edge", Conflicted_edge,". Now starting conflict resolution.")
                     self.Conflict_resolution(Conflicted_agent, t, edges_dict, nodes_dict, Conflicted_edge, conflict_time, heuristics, agent_lst, horizon)
 
 
@@ -355,7 +355,7 @@ class Aircraft(object):
         if movementoptions <= 1:
             prioritylevel = 1000
 
-        print("Priority level of aircraft", self.id, "is", prioritylevel, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", movementoptions)
+        # print("Priority level of aircraft", self.id, "is", prioritylevel, "and remaining path is", (self.path_to_goal[-1][1] - t), "and movement options are", movementoptions)
 
 
         return prioritylevel
