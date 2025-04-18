@@ -346,9 +346,9 @@ while simulating == True:
             if not random_spawning:
                 spawning_time = 10
                 if t == 1:
-                    ac = Aircraft(1, 'A', 35,1,t, nodes_dict)
+                    ac = Aircraft(1, 'A', 37,97,t, nodes_dict)
                     ac.status = "holding"
-                    ac1 = Aircraft(2, 'D', 36,1,t, nodes_dict)
+                    ac1 = Aircraft(2, 'D', 38,97,t, nodes_dict)
                     ac1.status = "holding"
                     aircraft_lst.append(ac)
                     agent_lst.append(ac)
@@ -452,7 +452,7 @@ while simulating == True:
             if len(sim_results) > Entries_per_sim:
                 #Save sim results to a file
                 df = pd.DataFrame(sim_results, columns=columns_results)
-                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+112}.csv"), index=False)
+                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+208}.csv"), index=False)
 
                 print("Max Entries per sim reached, restarting simulation")
                 running = False
