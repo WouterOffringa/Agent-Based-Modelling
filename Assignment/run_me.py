@@ -30,7 +30,7 @@ import gc # garbage collector
 
 t_max = 100
 
-results_folder = "simulation_results"
+results_folder = "simulation_results_v2"
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
@@ -452,7 +452,7 @@ while simulating == True:
             if len(sim_results) > Entries_per_sim:
                 #Save sim results to a file
                 df = pd.DataFrame(sim_results, columns=columns_results)
-                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+98}.csv"), index=False)
+                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+112}.csv"), index=False)
 
                 print("Max Entries per sim reached, restarting simulation")
                 running = False

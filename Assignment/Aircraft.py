@@ -349,7 +349,7 @@ class Aircraft(object):
 
         prioritylevel = sum([
                             movementoptions * weights['movementoptions'],
-                            # remaining_path * weights['routelength']
+                            remaining_path * weights['routelength']
                             ])
 
 
