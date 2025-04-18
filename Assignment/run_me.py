@@ -452,7 +452,7 @@ while simulating == True:
             if len(sim_results) > Entries_per_sim:
                 #Save sim results to a file
                 df = pd.DataFrame(sim_results, columns=columns_results)
-                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+74}.csv"), index=False)
+                df.to_csv(os.path.join(results_folder, f"simulation_results_{sim_no+86}.csv"), index=False)
 
                 print("Max Entries per sim reached, restarting simulation")
                 running = False
