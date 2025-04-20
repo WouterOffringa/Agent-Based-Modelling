@@ -22,16 +22,13 @@ from cbs import run_CBS
 from PrioritySolver import PriorityDetector
 from datetime import datetime
 import gc # garbage collector
-# import matplotlib
-# matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
-# import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
 import matplotlib.pyplot as plt
 
 #SET up the simulation tracker
 
-t_max = 20
+t_max = 100
 
 results_folder = "simulation_results_v2"
 if not os.path.exists(results_folder):
@@ -147,8 +144,11 @@ dp_spawning_time = 2 ## can alter later!
 
 if sensitivity == True:
 
-    # Parameters that change because sensitivity:
-    Entries_per_sim = 2  # To have shorter sims for trials sensitivity
+    ## Variables that change for sensitivity:
+    # Minimum_sims = 3
+    # Entries_per_sim = 100  # number of entries per simulation
+
+    minimum_entries_sensitivity = 5
 
     p_taxibots_list = [p_taxibots - dp_taxibots, p_taxibots, p_taxibots + dp_taxibots]
     p_spawntime_list = [p_spawning_time - dp_spawning_time, p_spawning_time, p_spawning_time + dp_spawning_time]
@@ -386,7 +386,7 @@ while simulating == True:
             spawning_locations = spawning_locations[amount_deleted_taxibots:]
             alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
             if t == 0:
-                print('spawning locations are', spawning_locations)
+                # print('spawning locations are', spawning_locations)
                 for i, location in enumerate(spawning_locations, start=1):
                     tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
                     tug_lst.append(tug)
@@ -394,30 +394,7 @@ while simulating == True:
                     tug.idle = True
                 constraints = []
                 run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1., t+1.5], constraints=constraints)
-            
-            #Requesting taxibots for ac
-        if sensitivity_nr_taxibots == True and sensitivity == True:
-            print('parameter list is', parameter_list)
-            print('current simulation number is', sim_no)
-            if local == True:
-                nr_taxibots = parameter_list[sim_no - 1]    # to make sim_no correspond with index
-            if local == False:
-                nr_taxibots = parameter_list[sim_no - 1]['taxibots']
-        if sensitivity == False or sensitivity_nr_taxibots == False:
-            nr_taxibots = 5
-        amount_deleted_taxibots = 5 - nr_taxibots
-        spawning_locations = spawning_locations[amount_deleted_taxibots:]
-        alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        if t == 0:
-            # print('spawning locations are', spawning_locations)
-            for i, location in enumerate(spawning_locations, start=1):
-                tug = Taxibot(alphabet[i-1], location, location, nodes_dict)
-                tug_lst.append(tug)
-                agent_lst.append(tug)
-                tug.idle = True
-            constraints = []
-            run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1., t+1.5], constraints=constraints)
-        
+
         #Requesting taxibots for ac
 
             for ac in aircraft_lst:
@@ -485,6 +462,14 @@ while simulating == True:
 
                 print("Max Entries per sim reached, restarting simulation")
                 running = False
+
+            ## Break condition for sensitivity, get at least 100 data points
+            if sensitivity:
+                print('the length of sim_results list is', len(sim_results))
+                if len(sim_results) > minimum_entries_sensitivity:
+                    print('Have enough datapoints for this simulation, sensitivity')
+                    running = False
+
             
             t = t + dt
             if t % 10 == 0:
@@ -520,19 +505,21 @@ while simulating == True:
     
     if UnsolvablePresent and running:
         pass
+    
     elif bound < l and sim_no > Minimum_sims:
         print("Confidence interval reached")
         simulating = False
         pg.quit()
         break
 
-    ## Break condition for sensitivity:
     if sensitivity:
-        if sim_no == Number_of_sims_sensitivity:
-            print('Did all simulations for sensitivity')
+        if sim_no > minimum_entries_sensitivity:
+            print("All simulations sensitivity done")
             simulating = False
             pg.quit()
             break
+
+
         
     sim_no = sim_no + 1    
     # =============================================================================
