@@ -254,6 +254,7 @@ def map_running(map_properties, current_states, t):  # function to update the ma
         - escape_pressed = boolean (True/False) = Used to end simulation loop if escape is pressed.
     """
     
+    collision_counter = 0
     reso = map_properties['inner_reso']  # get resolution
     scr = map_properties['scr']  # get screen
     scrrect = map_properties['scrrect']  # get screen surface
@@ -309,6 +310,7 @@ def map_running(map_properties, current_states, t):  # function to update the ma
     
     if collision:
         timer.sleep(0.4)
+        collision_counter += 1
     
     if keys[pg.K_ESCAPE]:  # if the escape key is being pressed
         escape_pressed = True  # stop running
@@ -320,4 +322,4 @@ def map_running(map_properties, current_states, t):  # function to update the ma
     if keys[pg.K_p]:
         input('Paused, press enter to continue')
         
-    return escape_pressed
+    return collision_counter, escape_pressed
