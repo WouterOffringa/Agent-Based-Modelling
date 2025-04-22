@@ -30,7 +30,8 @@ import matplotlib.pyplot as plt
 
 t_max = 100
 
-results_folder = "sim_results_with_path_lengthsss"
+# results_folder = "sim_results_with_path_lengthsss"
+results_folder = 'Sensitivity_results'
 if not os.path.exists(results_folder):
     os.makedirs(results_folder)
 
@@ -41,7 +42,7 @@ sim_no = 1
 alfa = 0.05 #95% confidence interval
 l = 0.5 #length of the interval for the total delay
 z_value = 1.96 #fill in compared to alfa /2 (alpha 0.05, gives alfa/2 of 0.025, z_value = 1.96)
-Entries_per_sim = 20 #number of entries per simulation
+Entries_per_sim = 25 #number of entries per simulation
 mean_results = []
 Stdev_results = []
     
@@ -127,53 +128,12 @@ rwy_arr = [node for node in nodes_dict if nodes_dict[node]["type"] == "rwy_a"]
 tug_gates = [node for node in nodes_dict if nodes_dict[node]["type"] == "taxiparking"]
 
 
-## Start sensitivity analysis
-sensitivity = True        # Set to true if want to do sensitivity
-local = True
-
-#For local sensitivity determine what parameters to do sensitivity on
-sensitivity_nr_taxibots = True
-sensitivity_spawning_time = False
-
-#determine initial values and sensitivity:
-p_taxibots = 4
-dp_taxibots = 1
-
-p_spawning_time = 4
-dp_spawning_time = 2 ## can alter later!
-
-if sensitivity == True:
-
-    ## Variables that change for sensitivity:
-    # Minimum_sims = 3
-    # Entries_per_sim = 100  # number of entries per simulation
-
-    minimum_entries_sensitivity = 5
-
-    p_taxibots_list = [p_taxibots - dp_taxibots, p_taxibots, p_taxibots + dp_taxibots]
-    p_spawntime_list = [p_spawning_time - dp_spawning_time, p_spawning_time, p_spawning_time + dp_spawning_time]
-
-    if local == True:
-        if sensitivity_nr_taxibots == True:
-            parameter_list = p_taxibots_list
-        if sensitivity_spawning_time == True:
-            parameter_list = p_spawntime_list
-        Number_of_sims_sensitivity = len(parameter_list)
-        if Number_of_sims_sensitivity != 3:
-            print('I should be doing local sensitivity, but I am doing', Number_of_sims,'simulations, which is wrong!')
-    if local == False:
-        parameter_list = []
-        for taxi in p_taxibots_list:
-            for time in p_spawntime_list:
-                parameter_list.append({'taxibots': taxi, 'spawning_time': time})
-        Number_of_sims_sensitivity = len(parameter_list)
-
 while simulating == True:
     gc.collect() # garbage collector
     sim_results = []
 
     #Parameters that can be changed:
-    simulation_time = 300
+    simulation_time = 200
     planner = "Independent" #choose which planner to use (currently only Independent is implemented)
 
     #Visualization (can also be changed)
@@ -256,7 +216,8 @@ while simulating == True:
             t= round(t,2) 
 
             #Check conditions for termination
-            if t >= time_end or escape_pressed: 
+            # if t >= time_end or escape_pressed:
+            if escape_pressed:
                 running = False
                 pg.quit()
                 print("Simulation Stopped")
@@ -285,67 +246,58 @@ while simulating == True:
             #Spawn aircraft for this timestep (use for example a random process)
             # ==== Random Spawning ====
             random_spawning = True
+            spawning_time = 4
+            if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
+                ac_type = random.choice(['A','D']) #randomly choose arrival or departure
+                if ac_type == 'D':
+                    available_gates = gates.copy()
+                    for ac in aircraft_lst:
+                        if ac.status == "holding" or ac.status == "pickup":
+                            if ac.start in available_gates:
+                                available_gates.remove(ac.start)
+                            elif ac.from_to[0] in available_gates:
+                                available_gates.remove(ac.from_to[0])
+                            elif ac.goal in available_gates:
+                                available_gates.remove(ac.goal)
+                        elif ac.status == "taxiing":
+                            if ac.goal in available_gates:
+                                available_gates.remove(ac.goal)
 
-            if random_spawning:
-                if sensitivity_spawning_time == True and sensitivity == True:
-                    if local == True:
-                        spawning_time = parameter_list[sim_no - 1]  # sim_no-1 to make the current simulation match with index
-                    if local == False:
-                        spawning_time = parameter_list[sim_no - 1]['spawning_time']
-                if sensitivity == False or sensitivity_spawning_time == False:
-                    spawning_time = 4       # This is the default for when no sensitivity is done
-
-                if (t-1) % spawning_time == 0 and (arrival_available is not False or dep_available is not False):
-                    ac_type = random.choice(['A','D']) #randomly choose arrival or departure
-                    if ac_type == 'D':
-                        available_gates = gates.copy()
-                        for ac in aircraft_lst:
-                            if ac.status == "holding" or ac.status == "pickup":
-                                if ac.start in available_gates:
-                                    available_gates.remove(ac.start)
-                                elif ac.from_to[0] in available_gates:
-                                    available_gates.remove(ac.from_to[0])
-                                elif ac.goal in available_gates:
-                                    available_gates.remove(ac.goal)
-                            elif ac.status == "taxiing":
-                                if ac.goal in available_gates:
-                                    available_gates.remove(ac.goal)
-                
-                        #print("Available gates for departure: ", available_gates)
-                        if len(available_gates) > 0:
-                            i += 1
-                            dep_available = True
-                            spawn_gate = random.choice(available_gates)
-                            ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
-                            ac.status = "holding"
-                            aircraft_lst.append(ac)
-                            agent_lst.append(ac)
-
-                        else:
-                            print("==No gates available for departure")
-                            dep_available = False
+                    #print("Available gates for departure: ", available_gates)
+                    if len(available_gates) > 0:
+                        i += 1
+                        dep_available = True
+                        spawn_gate = random.choice(available_gates)
+                        ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
+                        ac.status = "holding"
+                        aircraft_lst.append(ac)
+                        agent_lst.append(ac)
 
                     else:
-                        rwy_arr = [37,38]
-                        available_rwy = rwy_arr
-                        for ac in aircraft_lst:
-                            if ac.status == "holding" or ac.status == "pickup": # and not (ac.status == "arrived" or ac.status == "taxiing"):
-                                if ac.start in available_rwy:
-                                    available_rwy.remove(ac.start)
-                                elif ac.from_to[0] in available_rwy:
-                                    available_rwy.remove(ac.from_to[0])
-                        #print("Available runways for arrival: ", available_rwy)
-                        if len(available_rwy) > 0:
-                            i += 1
-                            arrival_available = True
-                            spawn_rwy = random.choice(available_rwy)
-                            ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
-                            ac.status = "holding"
-                            aircraft_lst.append(ac)
-                            agent_lst.append(ac)
-                        else:
-                            print("==No runways available for arrival")
-                            arrival_available = False
+                        print("==No gates available for departure")
+                        dep_available = False
+
+                else:
+                    rwy_arr = [37,38]
+                    available_rwy = rwy_arr
+                    for ac in aircraft_lst:
+                        if ac.status == "holding" or ac.status == "pickup": # and not (ac.status == "arrived" or ac.status == "taxiing"):
+                            if ac.start in available_rwy:
+                                available_rwy.remove(ac.start)
+                            elif ac.from_to[0] in available_rwy:
+                                available_rwy.remove(ac.from_to[0])
+                    #print("Available runways for arrival: ", available_rwy)
+                    if len(available_rwy) > 0:
+                        i += 1
+                        arrival_available = True
+                        spawn_rwy = random.choice(available_rwy)
+                        ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
+                        ac.status = "holding"
+                        aircraft_lst.append(ac)
+                        agent_lst.append(ac)
+                    else:
+                        print("==No runways available for arrival")
+                        arrival_available = False
 
 
             # ==== Fixed Spawning ====
@@ -374,14 +326,7 @@ while simulating == True:
             
             # ==== Spawning the taxibots ====
             spawning_locations = tug_gates
-
-            if sensitivity_nr_taxibots == True and sensitivity == True:
-                if local == True:
-                    nr_taxibots = parameter_list[sim_no - 1]    # to make sim_no correspond with index
-                if local == False:
-                    nr_taxibots = parameter_list[sim_no - 1]['taxibots']
-            if sensitivity == False or sensitivity_nr_taxibots == False:
-                nr_taxibots = 5
+            nr_taxibots = 5
             amount_deleted_taxibots = 5 - nr_taxibots
             spawning_locations = spawning_locations[amount_deleted_taxibots:]
             alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -455,7 +400,7 @@ while simulating == True:
                 if tug.status == 'taxiing, unavailable' or tug.status == 'taxiing, available':
                     tug.move(dt, t)
 
-            if len(sim_results) > Entries_per_sim:
+            if len(sim_results) >= Entries_per_sim or t == time_end:
                 #Save sim results to a file
                 df = pd.DataFrame(sim_results, columns=columns_results)
                 df.to_csv(os.path.join(results_folder, f"simulation_results_{000 + sim_no}.csv"), index=False)
@@ -463,13 +408,6 @@ while simulating == True:
 
                 print("Max Entries per sim reached, restarting simulation") 
                 running = False
-
-            ## Break condition for sensitivity, get at least 100 data points
-            if sensitivity:
-                print('the length of sim_results list is', len(sim_results))
-                if len(sim_results) > minimum_entries_sensitivity:
-                    print('Have enough datapoints for this simulation, sensitivity')
-                    running = False
 
             
             t = t + dt
@@ -482,43 +420,37 @@ while simulating == True:
     if UnsolvablePresent and running:
         print('Simulation contained an unsolvable conflict resolution, skipping...')
         n_unsolvable
-    elif sim_no == 1:
-        Mean_result = df["total_delay"].mean()
-        Stdev_result = 0
-        print("Mean result: ", Mean_result)
-        mean_results.append(Mean_result)
-        Stdev_results.append(Stdev_result)
-        bound = 100000 #set bound to a large number as initial (no solution yet)
-    else:
-        Mean_result_new = Mean_result + (df["total_delay"].mean() - Mean_result) / sim_no
-        Stdev_result = ((1 - 1/(sim_no -1))*(Stdev_result**2) + (sim_no)*(Mean_result_new - Mean_result)**2)**(1/2)
-        Mean_result = Mean_result_new
-        print("Mean result: ", Mean_result)
-        print("Stdev result: ", Stdev_result)
-        mean_results.append(Mean_result)
-        Stdev_results.append(Stdev_result)
-        print("Mean results list: ", mean_results)
-        print("Stdev results list: ", Stdev_results)
-
-        #Check if correct confidence is reached
-        bound = 2 * z_value * Stdev_result / (sim_no**0.5)
-        print("bound is: ", bound, "l is: ", l)	
-    
+    # elif sim_no == 1:
+    #     Mean_result = df["total_delay"].mean()
+    #     Stdev_result = 0
+    #     print("Mean result: ", Mean_result)
+    #     mean_results.append(Mean_result)
+    #     Stdev_results.append(Stdev_result)
+    #     bound = 100000 #set bound to a large number as initial (no solution yet)
+    # else:
+    #     Mean_result_new = Mean_result + (df["total_delay"].mean() - Mean_result) / sim_no
+    #     Stdev_result = ((1 - 1/(sim_no -1))*(Stdev_result**2) + (sim_no)*(Mean_result_new - Mean_result)**2)**(1/2)
+    #     Mean_result = Mean_result_new
+    #     print("Mean result: ", Mean_result)
+    #     print("Stdev result: ", Stdev_result)
+    #     mean_results.append(Mean_result)
+    #     Stdev_results.append(Stdev_result)
+    #     print("Mean results list: ", mean_results)
+    #     print("Stdev results list: ", Stdev_results)
+    #
+    #     #Check if correct confidence is reached
+    #     bound = 2 * z_value * Stdev_result / (sim_no**0.5)
+    #     print("bound is: ", bound, "l is: ", l)
+    #
     if UnsolvablePresent and running:
         pass
     
-    elif bound < l and sim_no > Minimum_sims:
-        print("Confidence interval reached")
-        simulating = False
-        pg.quit()
-        break
+    # elif bound < l and sim_no > Minimum_sims:
+    #     print("Confidence interval reached")
+    #     simulating = False
+    #     pg.quit()
+    #     break
 
-    if sensitivity:
-        if sim_no > minimum_entries_sensitivity:
-            print("All simulations sensitivity done")
-            simulating = False
-            pg.quit()
-            break
 
 
         
@@ -527,64 +459,3 @@ while simulating == True:
     # 2. Implement analysis of output data here
     # =============================================================================
 
-### Need to make this compatible with what I made for sensitivity at the beginning of run_me
-
-## Local sensitivity analysis results
-if local == True:
-    X_minus = mean_results[0]
-    X = mean_results[1]
-    X_plus = mean_results[2]
-    X_list = [X_minus, X, X_plus]
-
-    if sensitivity_nr_taxibots == True:
-        p = p_taxibots
-        dp = dp_taxibots
-        S_plus = (X_plus - X) / (dp / p)
-        S_minus = (X - X_minus) / (dp / p)
-        print('the S plus parameter is', S_plus)
-        print("the S minus parameter is", S_minus)
-
-        ## plot local sensitivity for taxibots
-        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-        axes[0].plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
-        axes[0].set_xlabel("Number of taxibots")
-        axes[0].set_ylabel("Delay")
-        axes[0].set_title("Delay vs Number of Taxibots")
-        axes[0].grid(True)
-
-        axes[1].plot(parameter_list, Stdev_results, marker='s', linestyle='--', color='green')
-        axes[1].set_xlabel("Number of taxibots")
-        axes[1].set_ylabel("Standard Deviation")
-        axes[1].set_title("Std Dev vs Number of Taxibots")
-        axes[1].grid(True)
-
-        # Tight layout for better spacing
-        plt.tight_layout()
-        plt.show()
-
-
-    if sensitivity_spawning_time == True:
-        p = p_spawning_time
-        dp = dp_spawning_time
-        S_plus = (X_plus - X) / (dp/p)
-        S_minus = (X - X_minus) / (dp/p)
-        print('the S plus parameter is', S_plus)
-        print("the S minus parameter is", S_minus)
-
-        ## plot local sensitivity for taxibots
-        fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-        axes[0].plot(parameter_list, X_list, marker='o', linestyle='-', color='blue')
-        axes[0].set_xlabel("Spawning time")
-        axes[0].set_ylabel("Delay")
-        axes[0].set_title("Delay vs Spawning time")
-        axes[0].grid(True)
-
-        axes[1].plot(parameter_list, Stdev_results, marker='s', linestyle='--', color='green')
-        axes[1].set_xlabel("Spawning time")
-        axes[1].set_ylabel("Standard Deviation")
-        axes[1].set_title("Std Dev vs Spawning time")
-        axes[1].grid(True)
-
-# if local == False:
