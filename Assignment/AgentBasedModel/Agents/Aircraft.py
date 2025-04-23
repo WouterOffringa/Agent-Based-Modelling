@@ -1,11 +1,12 @@
 from Functionality.single_agent_planner import simple_single_agent_astar
 import numpy as np
 
+
 class Aircraft(object):
     """Aircraft class, should be used in the creation of new aircraft."""
 
     def __init__(self, flight_id, a_d, start_node, goal_node, spawn_time, nodes_dict):
-        """Initialisation of aircraft object.
+        """Initialisation of an aircraft object.
 
         Args:
             flight_id (int): Unique ID for this aircraft
@@ -16,7 +17,7 @@ class Aircraft(object):
             nodes_dict (dict): Dictionary of the nodes of the airport map
         """
 
-        #Fixed parameters
+        # Fixed parameters
         self.speed = 1                  # How much the a/c moves per unit of t
         self.id = flight_id             # Flight ID
         self.type = a_d                 # Arrival or departure (a / d)
@@ -25,13 +26,13 @@ class Aircraft(object):
         self.goal = goal_node           # Goal node_id
         self.nodes_dict = nodes_dict    # Set the nodes dictionary as a class property
         
-        #Route related
+        # Route related
         self.status = None      # Initialize with an empty status
         self.path_to_goal = []  # Planned path from current location to the goal node
         self.from_to = [0,0]    # Edge currently being travelled
         self.constraints = []   # Log of constraints
 
-        #State related
+        # State related
         self.heading = 0                                    # Initialize the heading to north
         self.position = nodes_dict[self.start]["xy_pos"]    # (x,y) position on the map
         self.delay = None                                   # Delay from waiting on a taxibot
@@ -39,7 +40,7 @@ class Aircraft(object):
         self.arrival_time = None                            # Arrival time
         self.ideal_arrival_time = None                      # Ideal arrival time (so delay-less)
 
-        #Replanning related
+        # Replanning related
         self.last_node = None   # Last visited node
         self.replan = False     # Boolean, whether replanning or not
     
@@ -404,7 +405,3 @@ class Aircraft(object):
         for lst in lists:
             if self in lst:
                 lst.remove(self)
-
-
-
-

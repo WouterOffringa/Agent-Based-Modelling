@@ -1,7 +1,3 @@
-"""
-This is an example planner, that calls all agents to plan their route independently.
-"""
-
 def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=[]):
     for ac in aircraft_lst:
         if ac.status == "planning":
@@ -9,10 +5,6 @@ def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t,
             ac.track_delay_waiting(t)
             ac.position = nodes_dict[ac.start]["xy_pos"]
             ac.plan_independent(nodes_dict, edges_dict, heuristics, t)
-            # print("Aircraft", ac.id, "is taxiing, its next states are:", ac.path_to_goal)
-        # if ac.status == "arrived" and ac.position == (3.0, 6.0) or ac.position == (3.0, 5.0):
-        #     print("ac should leave", ac)
-        #     aircraft_lst.remove(ac)
             
             
 def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, horizon, constraints=[]):
@@ -29,7 +21,7 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
             tug.Hold_position(t, heuristics)
         # If the tug is called for, it will taxi to the aircraft
         if tug.status == "called by aircraft":
-            tug.Taxi_to_AC(t, edges_dict, heuristics, agent_lst, horizon)
+            tug.Taxi_to_AC(t, nodes_dict, edges_dict, heuristics, agent_lst, horizon)
             # print("Tug", tug.id, "is taxiing to an aircraft") #, its next states are:", tug.path_to_goal)
             tug.status = "taxiing, unavailable"
         # If the tug is following an aircraft, it will follow the location of the aircraft
@@ -40,7 +32,7 @@ def run_independent_planner_tugs(tugs_lst, nodes_dict, edges_dict, heuristics, t
 
         # If the aircraft arrives at the location, the tug will start holding position again
         if tug.Goal_AC is not None and tug.Goal_AC.status == "arrived":
-            tug.Taxi_to_holding(t, edges_dict, heuristics, agent_lst, horizon)
+            tug.Taxi_to_holding(t, nodes_dict, edges_dict, heuristics, agent_lst, horizon)
             # print("Tug", tug.id, "is taxiing to holding position, its next states are:", tug.path_to_goal)
             tug.status = "taxiing, available"
             # tug.Goal_AC.status = "arrived"
