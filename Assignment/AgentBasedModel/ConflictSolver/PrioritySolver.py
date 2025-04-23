@@ -1,13 +1,3 @@
-"""
-
-Here, we will define the PrioritySolver definition, which will be used when a conflict between two agents is found.
-It will call the priority function of the agents, compare them return a replanning task with an added constraint to the agent with the lowest priority.
-
-
-"""
-
-import Aircraft
-import Taxibot
 from independent import run_independent_planner
 
 

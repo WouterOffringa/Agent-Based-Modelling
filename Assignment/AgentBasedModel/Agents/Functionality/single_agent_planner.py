@@ -44,46 +44,28 @@ def heuristicFinder(graph, start_node, goal_node):
 
 
 def build_constraint_table(constraints, agent):
-    positive = []  # to collect positive constraints
     negative = []  # to collect negative constraints
     max_timestep = -1  # the maximum timestep in these constraints
-    #  collect constraints that are related to this agent
 
     for constraint in constraints:
         if constraint['positive']:  # positive constraint is effective for everyone
             if constraint['agent'] == agent:
-                positive.append(constraint)
+                raise ValueError("Positive constraints aren't implemented.")
             else:
                 negative.append(constraint)
             max_timestep = max(max_timestep, constraint['timestep'])
         elif constraint['agent'] == agent:  # negative constraint is effective for only one agent
             negative.append(constraint)
-            # print(constraint['timestep'], "constraint['timestep']")
             max_timestep = int(2*max(max_timestep, constraint['timestep']))
 
     constraint_table = [[] for _ in range(max_timestep + 1)]
-    for constraint in positive:
-        dtimestep = int(2*constraint['timestep'])
-        if len(constraint['node_id']) == 1:  # positive vertex constraint
-            constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': True})
-        else:  # positive edge constraint
-            constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': True})
-            constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': True})
-
-
-    # TODO: only negative vertex constraints works for now
 
     for constraint in negative:
         dtimestep = int(2*constraint['timestep'])
         if len(constraint['node_id']) == 1:  # vertex constraint
             constraint_table[dtimestep].append({'node_id': constraint['node_id'], 'positive': False, 'timestep': constraint['timestep']})
-        elif constraint['positive']:  # positive edge constraint for other agents
-            constraint_table[constraint['timestep'] - 1].append({'node_id': [constraint['node_id'][0]], 'positive': False})
-            constraint_table[constraint['timestep']].append({'node_id': [constraint['node_id'][1]], 'positive': False})
-            constraint_table[constraint['timestep']].append(
-                {'node_id': [constraint['node_id'][1], constraint['node_id'][0]], 'positive': False})
         else:  # negative edge constraint
-            constraint_table[constraint['timestep']].append({'node_id': constraint['node_id'], 'positive': False})
+            raise ValueError("Edge constraints don't appear to work currently. Please use a different method.")
     
     return constraint_table
 

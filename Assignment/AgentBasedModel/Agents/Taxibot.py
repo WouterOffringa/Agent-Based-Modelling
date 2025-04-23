@@ -1,4 +1,4 @@
-from single_agent_planner_v2 import simple_single_agent_astar
+from single_agent_planner import simple_single_agent_astar
 import math
 
 class Taxibot(object):
