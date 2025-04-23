@@ -76,6 +76,7 @@ dp_taxibots = 1
 p_spawning_time = 4
 dp_spawning_time = 2 ## can alter later!
 
+horizonspan = 1.5 #s
 
 if sensitivity == True:
     p_taxibots_list = [p_taxibots - dp_taxibots, p_taxibots, p_taxibots + dp_taxibots]
@@ -300,9 +301,9 @@ while simulating == True:
             if planner == "Independent":     
 
                 if t % 0.5 == 0:
-                    PriorityDetector(agent_lst, t, edges_dict, nodes_dict, heuristics)
-                    run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1], constraints=constraints)
-                    run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t, constraints=constraints)
+                    PrioritySolver(agent_lst, t, edges_dict, nodes_dict, heuristics, horizonspan)
+                    run_independent_planner_tugs(tug_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t, t+0.5, t+1])
+                    run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t)
 
                     
 
