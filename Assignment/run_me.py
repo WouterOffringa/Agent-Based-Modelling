@@ -4,4 +4,4 @@ Run-me.py is the main file of the simulation. Run this file to run the simulatio
 import AgentBasedModel.AgentBasedModel as abm
 
 # Run the simulation
-abm.TaxiingSimulation()
+simresults = abm.TaxiingSimulation()

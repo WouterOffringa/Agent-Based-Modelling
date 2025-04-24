@@ -28,7 +28,21 @@ def TaxiingSimulation(scenario = None,
                       visualization = True,
                       nodes_file = "AgentBasedModel\\Airport\\nodes_v2.xlsx",
                       edges_file = "AgentBasedModel\\Airport\\edges_v2.xlsx"):
-    
+    """Run the agent-based model for taxi operations.
+
+    Args:
+        scenario (dict, optional): dictionary of spawn events, formatted as {id: {'spawn_time':(float), 'a_d':('a'/'d'), 'start_node':(node_id), 'goal_node':(node_id)}}. Defaults to None.
+        n_taxibots (int, optional): number of taxibots in the simulation. Defaults to 5.
+        t_max (int, optional): maximum simulation time. Defaults to 100.
+        spawntime_aircraft (int, optional): spawning interval for aircraft. Defaults to 4.
+        entries_per_sim (int, optional): maximum amount of entries per simulation. Defaults to 1000.
+        visualization (bool, optional): whether to visualize the simulation. Defaults to True.
+        nodes_file (str, optional): path to the nodes file. Defaults to "AgentBasedModel\Airport\nodes_v2.xlsx".
+        edges_file (str, optional): path to the edges file. Defaults to "AgentBasedModel\Airport\edges_v2.xlsx".
+
+    Returns:
+        list: simulation results
+    """    
     # === Initialization ===
     # Set simulation parameters
     horizonspan = 1.5           # Size of the conflict detection horizon
@@ -42,7 +56,7 @@ def TaxiingSimulation(scenario = None,
 
     # Set visualization parameters
     plot_graph = False                      # Show graph representation in NetworkX
-    slow_factor = 0.01                      # 5 here means 5 times slower
+    slow_factor = 1                         # 5 here means 5 times slower
     visualization_speed = 0.1*slow_factor   # Set at 0.1 as default
 
     # Load the airport map
