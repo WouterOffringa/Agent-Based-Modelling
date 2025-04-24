@@ -20,8 +20,8 @@ def import_layout(nodes_file, edges_file):
     rwy_dep_xy = [] #lst with (x,y) positions of entry points of departure runways
     rwy_arr_xy = [] #lst with (x,y) positions of exit points of arrival runways
 
-    df_nodes = pd.read_excel(os.getcwd() + "/" + nodes_file)
-    df_edges = pd.read_excel(os.getcwd() + "/" + edges_file)
+    df_nodes = pd.read_excel(os.getcwd() + "\\" + nodes_file)
+    df_edges = pd.read_excel(os.getcwd() + "\\" + edges_file)
 
     #Create nodes_dict from df_nodes
     nodes_dict = {}

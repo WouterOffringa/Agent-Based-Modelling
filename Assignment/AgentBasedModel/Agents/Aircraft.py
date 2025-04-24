@@ -1,4 +1,4 @@
-from Functionality.single_agent_planner import simple_single_agent_astar
+from Agents.Functionality.single_agent_planner import simple_single_agent_astar
 import numpy as np
 
 
@@ -197,7 +197,7 @@ class Aircraft(object):
                 ac_nextsteps.append(extra_steps[ac_nextsteps[0]])
 
         # Backfill the horizon with None
-        ac_nextsteps.extend([None]*(3-len(ac_nextsteps)))
+        ac_nextsteps.extend([None]*(4-len(ac_nextsteps)))
 
         return ac_nextsteps
 

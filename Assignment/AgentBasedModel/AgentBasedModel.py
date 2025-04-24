@@ -28,8 +28,8 @@ def TaxiingSimulation(scenario = None,
                       t_max = 100,
                       spawntime_aircraft = 4,
                       entries_per_sim = 1000,
-                      nodes_file = "AgentBasedModel\Airport\nodes_v2.xlsx",
-                      edges_file = "AgentBasedModel\Airport\edges_v2.xlsx"):
+                      nodes_file = "AgentBasedModel\\Airport\\nodes_v2.xlsx",
+                      edges_file = "AgentBasedModel\\Airport\\edges_v2.xlsx"):
     
     # === Initialization ===
     # Set simulation parameters
@@ -66,7 +66,7 @@ def TaxiingSimulation(scenario = None,
     aircraft_lst = []   # List which contains aircraft agents
     taxibot_lst = []    # List which contains tug agents  
     agent_lst = []      # List which contains all agents
-
+    ac_id = 1           # Aircraft ID
 
     # === Simulation ===
     sim_results = []
@@ -134,10 +134,10 @@ def TaxiingSimulation(scenario = None,
             
                     # If a gate is available, spawn the aircraft at a random, available gate
                     if len(available_gates) > 0:
-                        i += 1
+                        ac_id += 1
                         dep_available = True
                         spawn_gate = random.choice(available_gates)
-                        ac = Aircraft(i, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
+                        ac = Aircraft(ac_id, 'D', spawn_gate, random.choice(rwy_dep), t, nodes_dict)
                         ac.status = "holding"
                         aircraft_lst.append(ac)
                         agent_lst.append(ac)
@@ -159,10 +159,10 @@ def TaxiingSimulation(scenario = None,
 
                     # If a runway exit is available, spawn the aircraft at a random, available runway exit
                     if len(available_rwy) > 0:
-                        i += 1
+                        ac_id += 1
                         arrival_available = True
                         spawn_rwy = random.choice(available_rwy)
-                        ac = Aircraft(i, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
+                        ac = Aircraft(ac_id, 'A', spawn_rwy, random.choice(gates), t, nodes_dict)
                         ac.status = "holding"
                         aircraft_lst.append(ac)
                         agent_lst.append(ac)
@@ -176,6 +176,7 @@ def TaxiingSimulation(scenario = None,
                 if t == scenario[id]['spawn_time']:
                     # Time matches the spawning time, create the aircraft
                     ac = Aircraft(id, scenario[id]['a_d'], scenario[id]['start_node'], scenario[id]['goal_node'],t,nodes_dict)
+                    ac.status = "holding"
                     aircraft_lst.append(ac)
                     agent_lst.append(ac)
 
@@ -201,7 +202,7 @@ def TaxiingSimulation(scenario = None,
         if planner == "Independent":     
             if t % 0.5 == 0:
                 PrioritySolver(agent_lst, t, edges_dict, nodes_dict, heuristics, horizonspan)
-                run_independent_planner_taxibots(taxibot_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t+k*0.5 for k in range(1 + horizonspan // 0.5)])
+                run_independent_planner_taxibots(taxibot_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, [t+k*0.5 for k in range(int(1 + (horizonspan // 0.5)))])
                 run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t)
         elif planner == "Prioritized":
             run_prioritized_planner()
@@ -242,7 +243,7 @@ def TaxiingSimulation(scenario = None,
             agent_lst.remove(ac)
 
         # Move the taxibots that are taxiing
-        for taxibots in taxibot_lst:
+        for taxibot in taxibot_lst:
             if taxibot.status == 'taxiing, unavailable' or taxibot.status == 'taxiing, available':
                 taxibot.move(dt, t)
 
@@ -255,4 +256,6 @@ def TaxiingSimulation(scenario = None,
     return sim_results
 
 
-TaxiingSimulation()
+TaxiingSimulation(scenario={1:{'spawn_time':5.0, 'a_d':'a', 'start_node': 37,'goal_node': 34},
+                            2:{'spawn_time':5.0, 'a_d':'d', 'start_node': 34,'goal_node': 37}})
+# TaxiingSimulation()

@@ -113,9 +113,9 @@ def map_initialization(nodes_dict, edges_dict):  # function to initialise mapf
     scr = pg.display.set_mode(outer_reso)
     scrrect = scr.get_rect()  # get rectangular area of the surface
     scr.fill(white)  # set background color
-    plane_pic = pg.image.load(os.getcwd() + "\\blue-plane-hi.bmp")  # get the aircraft image
+    plane_pic = pg.image.load(os.getcwd() + "\\AgentBasedModel\Visualization\\blue-plane-hi.bmp")  # get the aircraft image
     plane_pic.set_colorkey(pg.Color(255, 255, 255))  # remove white background to make transparent
-    tug_pic = pg.image.load(os.getcwd() + "\\tug.bmp")  # get the tug image
+    tug_pic = pg.image.load(os.getcwd() + "\\AgentBasedModel\Visualization\\tug.bmp")  # get the tug image
     tug_pic.set_colorkey(pg.Color(255, 255, 255))  # remove white background to make transparent
 
 

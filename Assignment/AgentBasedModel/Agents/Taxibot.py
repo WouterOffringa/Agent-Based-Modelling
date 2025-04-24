@@ -1,4 +1,4 @@
-from Functionality.single_agent_planner import simple_single_agent_astar
+from Agents.Functionality.single_agent_planner import simple_single_agent_astar
 import numpy as np
 
 
@@ -23,7 +23,7 @@ class Taxibot(object):
         self.nodes_dict = nodes_dict                # Set the nodes dictionary as a class property
 
         # Route related
-        self.status = "holding" # Initialize status
+        self.status = "holding"                 # Initialize status
         self.path_to_goal = []  # Planned path from current location to the goal node
         self.from_to = [0,0]    # Edge currently being travelled
         self.constraints = []   # Log of constraints
@@ -100,12 +100,9 @@ class Taxibot(object):
         self.get_heading(xy_from, xy_to)	
 
         #Check if goal is reached or if to_node is reached
-        if self.position == xy_to and self.path_to_goal[0][1] == t+dt: #If with this move its current to node is reached
-            if self.position == self.nodes_dict[self.goal]["xy_pos"]: #if the final goal is reached
+        if self.position == xy_to and self.path_to_goal[0][1] == t+dt: # If with this move its current to node is reached
+            if self.position == self.nodes_dict[self.goal_node]["xy_pos"]: # If the final goal is reached
                 self.status = "arrived"
-                print("\nAircraft", self.id, "has arrived at its destination at t=", t)
-                if self.arrival_time == None:
-                    self.arrival_time = np.ceil(t * 2) / 2  #rounds up to half a second always
 
             else:  #current to_node is reached, update the remaining path
                 remaining_path = self.path_to_goal
@@ -131,39 +128,32 @@ class Taxibot(object):
             t (float): Current time
         """        
 
-        if self.status == "taxiing":
-            start_node = self.start # Node from which planning should be done
-            goal_node = self.goal # Node to which planning should be done
-            
-            # When replanning, use the current node as the begin node of the path
-            if self.replan == True:
-                success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
-                self.replan = False
-
-            # When not replanning, use the start node as the begin node of the path
-            if self.replan == False:
-                success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+        start_node = self.from_to[0] # Node from which planning should be done
+        goal_node = self.goal_node # Node to which planning should be done
         
-            if success:
-                # Set the path
-                self.path_to_goal = path[1:]
-                # Update the next node
-                next_node_id = self.path_to_goal[0][0]
-                self.from_to = [path[0][0], next_node_id]
+        # When replanning, use the current node as the begin node of the path
+        if self.replan == True:
+            success, path = simple_single_agent_astar(nodes_dict, self.from_to[0], goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+            self.replan = False
 
-                # Store the departure time and ideal arrival time if they aren't yet logged
-                if self.departure_time == None:
-                    self.departure_time = t
-                if self.ideal_arrival_time == None:
-                    self.ideal_arrival_time = path[-1][1]
+        # When not replanning, use the start node as the begin node of the path
+        if self.replan == False:
+            success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
+    
+        if success:
+            # Set the path
+            self.path_to_goal = path[1:]
+            # Update the next node
+            next_node_id = self.path_to_goal[0][0]
+            self.from_to = [path[0][0], next_node_id]
 
-            # Raise an error if no solution is found
-            else:
-                raise Exception("No solution found for", self.id)
-            
-            # Check the path timing
-            if path[0][1] != t:
-                raise Exception("Something is wrong with the timing of the path planning")
+        # Raise an error if no solution is found
+        else:
+            raise Exception("No solution found for", self.id)
+        
+        # Check the path timing
+        if path[0][1] != t:
+            raise Exception("Something is wrong with the timing of the path planning")
 
 
     def broadcast_next_nodes(self, horizon):
@@ -191,7 +181,7 @@ class Taxibot(object):
                 ac_nextsteps.append(extra_steps[ac_nextsteps[0]])
 
         # Backfill the horizon with None
-        ac_nextsteps.extend([None]*(3-len(ac_nextsteps)))
+        ac_nextsteps.extend([None]*(4-len(ac_nextsteps)))
 
         return ac_nextsteps
 
@@ -321,9 +311,6 @@ class Taxibot(object):
             t (float): Current time
             heuristics (dict): Dictionary of the heuristics. Unused but included for future implementation
         """        
-        if self.from_to[1] != self.holding_location:
-            raise ValueError(f'Taxibot {self.id} told to remain at the holding position, but it is not yet at the holding position.')
-        
         # Update the path & goal node
         self.goal_node = self.holding_location
         self.path_to_goal = [(self.holding_location, t+0.5), (self.holding_location, t+1), (self.holding_location, t+1.5)]
@@ -352,6 +339,8 @@ class Taxibot(object):
             horizon (list): Timestamps of the horizon
         """        
         # Plan the route to the holding position and verify it's conflict free
+        self.goal_node = self.holding_location
+        self.from_to[0] = self.Goal_AC.goal
         self.plan_independent(nodes_dict, edges_dict, heuristics, t)
         self.conflict_detection(agent_lst, horizon, t, edges_dict, nodes_dict, heuristics)
 
