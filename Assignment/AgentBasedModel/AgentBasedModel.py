@@ -3,24 +3,21 @@ import random
 import gc
 
 # Import agents
-from Agents.Aircraft import Aircraft
-from Agents.Taxibot import Taxibot
-from Agents.Functionality.single_agent_planner import calc_heuristics
+from AgentBasedModel.Agents.Aircraft import Aircraft
+from AgentBasedModel.Agents.Taxibot import Taxibot
+from AgentBasedModel.Agents.Functionality.single_agent_planner import calc_heuristics
 
 # Import conflict solvers
-from ConflictSolver.cbs import run_CBS
-from ConflictSolver.independent import *
-from ConflictSolver.prioritized import run_prioritized_planner
-from ConflictSolver.PrioritySolver import PrioritySolver
+from AgentBasedModel.ConflictSolver.cbs import run_CBS
+from AgentBasedModel.ConflictSolver.independent import *
+from AgentBasedModel.ConflictSolver.prioritized import run_prioritized_planner
+from AgentBasedModel.ConflictSolver.PrioritySolver import PrioritySolver
 
 # Import airport
-from Airport.airportlayout import *
+from AgentBasedModel.Airport.airportlayout import *
 
 # Import visualisation
-from Visualization.visualization import *
-import matplotlib
-matplotlib.use('TkAgg')  # Set the backend to 'TkAgg' (interactive)
-import matplotlib.pyplot as plt
+from AgentBasedModel.Visualization.visualization import *
 
 
 def TaxiingSimulation(scenario = None,
@@ -28,6 +25,7 @@ def TaxiingSimulation(scenario = None,
                       t_max = 100,
                       spawntime_aircraft = 4,
                       entries_per_sim = 1000,
+                      visualization = True,
                       nodes_file = "AgentBasedModel\\Airport\\nodes_v2.xlsx",
                       edges_file = "AgentBasedModel\\Airport\\edges_v2.xlsx"):
     
@@ -44,7 +42,6 @@ def TaxiingSimulation(scenario = None,
 
     # Set visualization parameters
     plot_graph = False                      # Show graph representation in NetworkX
-    visualization = True                    # Pygame visualization
     slow_factor = 0.01                      # 5 here means 5 times slower
     visualization_speed = 0.1*slow_factor   # Set at 0.1 as default
 
@@ -254,8 +251,3 @@ def TaxiingSimulation(scenario = None,
         t += dt
 
     return sim_results
-
-
-TaxiingSimulation(scenario={1:{'spawn_time':5.0, 'a_d':'a', 'start_node': 37,'goal_node': 34},
-                            2:{'spawn_time':5.0, 'a_d':'d', 'start_node': 34,'goal_node': 37}})
-# TaxiingSimulation()

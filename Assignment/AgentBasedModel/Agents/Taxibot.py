@@ -1,4 +1,4 @@
-from Agents.Functionality.single_agent_planner import simple_single_agent_astar
+from AgentBasedModel.Agents.Functionality.single_agent_planner import simple_single_agent_astar
 import numpy as np
 
 
@@ -137,7 +137,7 @@ class Taxibot(object):
             self.replan = False
 
         # When not replanning, use the start node as the begin node of the path
-        if self.replan == False:
+        else:
             success, path = simple_single_agent_astar(nodes_dict, start_node, goal_node, heuristics, self.id, current_time=t, constraints=self.constraints)
     
         if success:
