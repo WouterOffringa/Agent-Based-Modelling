@@ -20,7 +20,7 @@ def run_independent_planner(aircraft_lst, nodes_dict, edges_dict, heuristics, t)
 
 
 def run_independent_planner_taxibots(taxibot_lst, nodes_dict, edges_dict, heuristics, t, agent_lst, horizon):
-    """Run the independent planner for all relevant aircraft.
+    """Run the independent planner for all relevant taxibots.
 
     Args:
         taxibot_lst (list): List containing all the taxibots
