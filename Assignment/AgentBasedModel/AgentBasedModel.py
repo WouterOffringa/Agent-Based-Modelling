@@ -37,7 +37,7 @@ def TaxiingSimulation(scenario = None,
         spawntime_aircraft (int, optional): spawning interval for aircraft. Defaults to 4.
         entries_per_sim (int, optional): maximum amount of entries per simulation. Defaults to 1000.
         visualization (bool, optional): whether to visualize the simulation. Defaults to True.
-        nodes_file (str, optional): path to the nodes file. Defaults to "AgentBasedModel\Airport\nodes_v2.xlsx".
+        nodes_file (str, optional): path to the nodes file. Defaults to "AgentBasedModel\Airport\\nodes_v2.xlsx".
         edges_file (str, optional): path to the edges file. Defaults to "AgentBasedModel\Airport\edges_v2.xlsx".
 
     Returns:
